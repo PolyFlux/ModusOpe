@@ -34,6 +34,9 @@ To enable Google Drive integration, you need to set up Google Cloud credentials:
    - Add your domain to "Authorized JavaScript origins":
      - For development: `http://localhost:5173`
      - For production: your actual domain (e.g., `https://yourdomain.com`)
+   - **IMPORTANT**: Add your domain to "Authorized redirect URIs":
+     - For development: `http://localhost:5173`
+     - For production: your actual domain (e.g., `https://yourdomain.com`)
    - Copy the Client ID for later use
 
 ### 3. Configure Environment Variables
@@ -50,7 +53,8 @@ To enable Google Drive integration, you need to set up Google Cloud credentials:
 - **Never commit your `.env` file** to version control
 - The app will work in demo mode without real credentials
 - For production deployment, set environment variables in your hosting platform
-- Make sure to add your production domain to the OAuth 2.0 Client ID settings
+- **Critical**: Make sure to add your domain to BOTH "Authorized JavaScript origins" AND "Authorized redirect URIs" in the OAuth 2.0 Client ID settings
+- The redirect URI must exactly match your application's origin (e.g., `http://localhost:5173` for development)
 
 ### 5. Demo Mode
 

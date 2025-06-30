@@ -127,25 +127,7 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
           scope: SCOPES,
           ux_mode: 'redirect',
           redirect_uri: window.location.origin,
-          callback: (response: any) => {
-            // This callback won't be used in redirect mode
-            // The response will be handled in the useEffect above
-            if (response.error) {
-              setError(`Kirjautumisvirhe: ${response.error}`);
-              setIsLoading(false);
-              return;
-            }
-            
-            setAccessToken(response.access_token);
-            setIsSignedIn(true);
-            setIsLoading(false);
-            setError(null);
-            
-            // Set the access token for gapi client
-            window.gapi.client.setToken({
-              access_token: response.access_token
-            });
-          },
+          // Remove callback function for redirect mode as it's not used
         });
 
         setTokenClient(client);
