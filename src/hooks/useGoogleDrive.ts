@@ -48,6 +48,45 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
            clientId !== 'your_google_client_id_here.apps.googleusercontent.com';
   };
 
+  // Handle OAuth redirect callback
+  useEffect(() => {
+    const handleOAuthCallback = () => {
+      const urlParams = new URLSearchParams(window.location.hash.substring(1));
+      const accessToken = urlParams.get('access_token');
+      const error = urlParams.get('error');
+
+      if (error) {
+        setError(`Kirjautumisvirhe: ${error}`);
+        setIsLoading(false);
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+        return;
+      }
+
+      if (accessToken) {
+        setAccessToken(accessToken);
+        setIsSignedIn(true);
+        setIsLoading(false);
+        setError(null);
+        
+        // Set the access token for gapi client
+        if (window.gapi && window.gapi.client) {
+          window.gapi.client.setToken({
+            access_token: accessToken
+          });
+        }
+
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    };
+
+    // Check if we're returning from OAuth redirect
+    if (window.location.hash.includes('access_token')) {
+      handleOAuthCallback();
+    }
+  }, []);
+
   // Initialize Google API
   useEffect(() => {
     const initializeGapi = async () => {
@@ -82,11 +121,15 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
           discoveryDocs: [DISCOVERY_DOC],
         });
 
-        // Initialize Google Identity Services
+        // Initialize Google Identity Services with redirect flow
         const client = window.google.accounts.oauth2.initTokenClient({
           client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
           scope: SCOPES,
+          ux_mode: 'redirect',
+          redirect_uri: window.location.origin,
           callback: (response: any) => {
+            // This callback won't be used in redirect mode
+            // The response will be handled in the useEffect above
             if (response.error) {
               setError(`Kirjautumisvirhe: ${response.error}`);
               setIsLoading(false);
@@ -195,8 +238,9 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
           }
         }
 
-        // Request new access token
+        // Request new access token using redirect flow
         tokenClient.requestAccessToken({ prompt: 'consent' });
+        // Note: The page will redirect, so we don't set loading to false here
       } else {
         throw new Error('Google Identity Services ei ole alustettu');
       }
