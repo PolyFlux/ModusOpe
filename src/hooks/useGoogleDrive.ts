@@ -64,6 +64,7 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
       }
 
       if (accessToken) {
+        console.log('OAuth callback: Access token received');
         setAccessToken(accessToken);
         setIsSignedIn(true);
         setIsLoading(false);
@@ -74,15 +75,24 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
           window.gapi.client.setToken({
             access_token: accessToken
           });
+          console.log('Access token set for gapi client');
         }
 
         // Clean up URL
         window.history.replaceState({}, document.title, window.location.pathname);
+        
+        // Auto-load files after successful authentication
+        setTimeout(() => {
+          console.log('Auto-loading files after authentication');
+          loadFiles();
+        }, 500);
       }
     };
 
     // Check if we're returning from OAuth redirect
     if (window.location.hash.includes('access_token')) {
+      console.log('OAuth redirect detected, processing...');
+      setIsLoading(true);
       handleOAuthCallback();
     }
   }, []);
@@ -121,18 +131,45 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
           discoveryDocs: [DISCOVERY_DOC],
         });
 
-        // Initialize Google Identity Services with redirect flow
+        // Initialize Google Identity Services with popup flow instead of redirect
         const client = window.google.accounts.oauth2.initTokenClient({
           client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
           scope: SCOPES,
-          ux_mode: 'redirect',
-          redirect_uri: window.location.origin,
-          // Remove callback function for redirect mode as it's not used
+          ux_mode: 'popup',
+          callback: (response: any) => {
+            console.log('Token client callback:', response);
+            if (response.error) {
+              setError(`Kirjautumisvirhe: ${response.error}`);
+              setIsLoading(false);
+              // Fallback to demo mode
+              loadDemoFiles();
+              setIsSignedIn(true);
+              return;
+            }
+            
+            if (response.access_token) {
+              setAccessToken(response.access_token);
+              setIsSignedIn(true);
+              setIsLoading(false);
+              setError(null);
+              
+              // Set the access token for gapi client
+              window.gapi.client.setToken({
+                access_token: response.access_token
+              });
+              
+              // Auto-load files after successful authentication
+              setTimeout(() => {
+                loadFiles();
+              }, 100);
+            }
+          }
         });
 
         setTokenClient(client);
         setGapi(window.gapi);
         setError(null);
+        console.log('Google API initialized successfully');
       } catch (err) {
         console.log('Google API initialization failed, using demo mode:', err);
         setError('Google API ei ole käytettävissä. Käytetään demo-tilaa.');
@@ -199,6 +236,7 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
         await new Promise(resolve => setTimeout(resolve, 1000));
         setIsSignedIn(true);
         loadDemoFiles();
+        setIsLoading(false);
         return;
       }
 
@@ -220,9 +258,10 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
           }
         }
 
-        // Request new access token using redirect flow
+        // Request new access token using popup flow
+        console.log('Requesting access token...');
         tokenClient.requestAccessToken({ prompt: 'consent' });
-        // Note: The page will redirect, so we don't set loading to false here
+        // Note: The callback will handle setting loading to false
       } else {
         throw new Error('Google Identity Services ei ole alustettu');
       }
@@ -271,6 +310,7 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
           ? `'${folderId}' in parents and trashed=false`
           : "trashed=false";
 
+        console.log('Loading files from Google Drive...');
         const response = await gapi.client.drive.files.list({
           q: query,
           pageSize: 50,
@@ -280,6 +320,7 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
 
         const driveFiles: GoogleDriveFile[] = response.result.files || [];
         setFiles(driveFiles);
+        console.log(`Loaded ${driveFiles.length} files from Google Drive`);
       } else {
         // Demo mode - files are already loaded
         if (files.length === 0) {
@@ -287,6 +328,7 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
         }
       }
     } catch (err) {
+      console.error('Error loading files:', err);
       setError(`Tiedostojen lataus epäonnistui: ${err}`);
       // Fallback to demo files
       if (files.length === 0) {
