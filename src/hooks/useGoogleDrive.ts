@@ -48,55 +48,6 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
            clientId !== 'your_google_client_id_here.apps.googleusercontent.com';
   };
 
-  // Handle OAuth redirect callback
-  useEffect(() => {
-    const handleOAuthCallback = () => {
-      const urlParams = new URLSearchParams(window.location.hash.substring(1));
-      const accessToken = urlParams.get('access_token');
-      const error = urlParams.get('error');
-
-      if (error) {
-        setError(`Kirjautumisvirhe: ${error}`);
-        setIsLoading(false);
-        // Clean up URL
-        window.history.replaceState({}, document.title, window.location.pathname);
-        return;
-      }
-
-      if (accessToken) {
-        console.log('OAuth callback: Access token received');
-        setAccessToken(accessToken);
-        setIsSignedIn(true);
-        setIsLoading(false);
-        setError(null);
-        
-        // Set the access token for gapi client
-        if (window.gapi && window.gapi.client) {
-          window.gapi.client.setToken({
-            access_token: accessToken
-          });
-          console.log('Access token set for gapi client');
-        }
-
-        // Clean up URL
-        window.history.replaceState({}, document.title, window.location.pathname);
-        
-        // Auto-load files after successful authentication
-        setTimeout(() => {
-          console.log('Auto-loading files after authentication');
-          loadFiles();
-        }, 500);
-      }
-    };
-
-    // Check if we're returning from OAuth redirect
-    if (window.location.hash.includes('access_token')) {
-      console.log('OAuth redirect detected, processing...');
-      setIsLoading(true);
-      handleOAuthCallback();
-    }
-  }, []);
-
   // Initialize Google API
   useEffect(() => {
     const initializeGapi = async () => {
@@ -131,39 +82,11 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
           discoveryDocs: [DISCOVERY_DOC],
         });
 
-        // Initialize Google Identity Services with popup flow instead of redirect
+        // Initialize Google Identity Services - simplified without callback
         const client = window.google.accounts.oauth2.initTokenClient({
           client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
           scope: SCOPES,
-          ux_mode: 'popup',
-          callback: (response: any) => {
-            console.log('Token client callback:', response);
-            if (response.error) {
-              setError(`Kirjautumisvirhe: ${response.error}`);
-              setIsLoading(false);
-              // Fallback to demo mode
-              loadDemoFiles();
-              setIsSignedIn(true);
-              return;
-            }
-            
-            if (response.access_token) {
-              setAccessToken(response.access_token);
-              setIsSignedIn(true);
-              setIsLoading(false);
-              setError(null);
-              
-              // Set the access token for gapi client
-              window.gapi.client.setToken({
-                access_token: response.access_token
-              });
-              
-              // Auto-load files after successful authentication
-              setTimeout(() => {
-                loadFiles();
-              }, 100);
-            }
-          }
+          ux_mode: 'popup'
         });
 
         setTokenClient(client);
@@ -258,14 +181,81 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
           }
         }
 
-        // Request new access token using popup flow
+        // Request new access token using Promise-based approach
         console.log('Requesting access token...');
-        tokenClient.requestAccessToken({ prompt: 'consent' });
-        // Note: The callback will handle setting loading to false
+        
+        return new Promise<void>((resolve, reject) => {
+          try {
+            // Set up a one-time callback
+            const originalCallback = tokenClient.callback;
+            
+            tokenClient.callback = (response: any) => {
+              // Restore original callback
+              tokenClient.callback = originalCallback;
+              
+              console.log('Token response received:', response);
+              
+              if (response.error) {
+                console.error('Token error:', response.error);
+                setError(`Kirjautumisvirhe: ${response.error}`);
+                setIsLoading(false);
+                // Fallback to demo mode
+                loadDemoFiles();
+                setIsSignedIn(true);
+                reject(new Error(response.error));
+                return;
+              }
+              
+              if (response.access_token) {
+                console.log('Access token received successfully');
+                setAccessToken(response.access_token);
+                setIsSignedIn(true);
+                setError(null);
+                
+                // Set the access token for gapi client
+                window.gapi.client.setToken({
+                  access_token: response.access_token
+                });
+                
+                // Auto-load files after successful authentication
+                setTimeout(async () => {
+                  try {
+                    await loadFiles();
+                    setIsLoading(false);
+                    resolve();
+                  } catch (err) {
+                    console.error('Error loading files after auth:', err);
+                    setIsLoading(false);
+                    resolve(); // Still resolve as auth was successful
+                  }
+                }, 100);
+              } else {
+                setError('Ei saatu access tokenia');
+                setIsLoading(false);
+                loadDemoFiles();
+                setIsSignedIn(true);
+                reject(new Error('No access token received'));
+              }
+            };
+            
+            // Request the token
+            tokenClient.requestAccessToken({ prompt: 'consent' });
+            
+          } catch (err) {
+            console.error('Error in token request:', err);
+            setError(`Kirjautuminen epäonnistui: ${err}`);
+            setIsLoading(false);
+            loadDemoFiles();
+            setIsSignedIn(true);
+            reject(err);
+          }
+        });
+        
       } else {
         throw new Error('Google Identity Services ei ole alustettu');
       }
     } catch (err) {
+      console.error('Sign in error:', err);
       setError(`Kirjautuminen epäonnistui: ${err}`);
       setIsLoading(false);
       // Fallback to demo mode
