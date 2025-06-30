@@ -34,6 +34,8 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<GoogleDriveFile[]>([]);
   const [gapi, setGapi] = useState<any>(null);
+  const [tokenClient, setTokenClient] = useState<any>(null);
+  const [accessToken, setAccessToken] = useState<string | null>(null);
 
   // Check if we have valid environment variables
   const hasValidConfig = () => {
@@ -64,8 +66,15 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
           return;
         }
 
+        if (typeof window.google === 'undefined') {
+          setError('Google Identity Services ei latautunut. Tarkista internetyhteytesi.');
+          loadDemoFiles();
+          return;
+        }
+
+        // Initialize gapi client
         await new Promise<void>((resolve) => {
-          window.gapi.load('auth2:client', resolve);
+          window.gapi.load('client', resolve);
         });
 
         await window.gapi.client.init({
@@ -73,17 +82,30 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
           discoveryDocs: [DISCOVERY_DOC],
         });
 
-        // Initialize auth2
-        const authInstance = window.gapi.auth2.init({
+        // Initialize Google Identity Services
+        const client = window.google.accounts.oauth2.initTokenClient({
           client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-          scope: SCOPES
+          scope: SCOPES,
+          callback: (response: any) => {
+            if (response.error) {
+              setError(`Kirjautumisvirhe: ${response.error}`);
+              setIsLoading(false);
+              return;
+            }
+            
+            setAccessToken(response.access_token);
+            setIsSignedIn(true);
+            setIsLoading(false);
+            setError(null);
+            
+            // Set the access token for gapi client
+            window.gapi.client.setToken({
+              access_token: response.access_token
+            });
+          },
         });
 
-        // Check if user is already signed in
-        if (authInstance.isSignedIn.get()) {
-          setIsSignedIn(true);
-        }
-
+        setTokenClient(client);
         setGapi(window.gapi);
         setError(null);
       } catch (err) {
@@ -155,36 +177,58 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
         return;
       }
 
-      if (gapi && gapi.auth2) {
-        const authInstance = gapi.auth2.getAuthInstance();
-        await authInstance.signIn();
-        setIsSignedIn(true);
+      if (tokenClient) {
+        // Check if we already have a valid token
+        if (accessToken) {
+          try {
+            // Test if the current token is still valid
+            await window.gapi.client.drive.files.list({
+              pageSize: 1,
+              fields: 'files(id)'
+            });
+            setIsSignedIn(true);
+            setIsLoading(false);
+            return;
+          } catch (err) {
+            // Token is invalid, need to get a new one
+            setAccessToken(null);
+          }
+        }
+
+        // Request new access token
+        tokenClient.requestAccessToken({ prompt: 'consent' });
       } else {
-        throw new Error('Google API ei ole alustettu');
+        throw new Error('Google Identity Services ei ole alustettu');
       }
     } catch (err) {
       setError(`Kirjautuminen epäonnistui: ${err}`);
+      setIsLoading(false);
       // Fallback to demo mode
       loadDemoFiles();
       setIsSignedIn(true);
-    } finally {
-      setIsLoading(false);
     }
-  }, [gapi]);
+  }, [tokenClient, accessToken]);
 
   const signOut = useCallback(async () => {
     try {
-      if (gapi && gapi.auth2 && hasValidConfig()) {
-        const authInstance = gapi.auth2.getAuthInstance();
-        await authInstance.signOut();
+      if (accessToken && hasValidConfig()) {
+        // Revoke the access token
+        window.google.accounts.oauth2.revoke(accessToken, () => {
+          console.log('Access token revoked');
+        });
+        
+        // Clear the token from gapi client
+        window.gapi.client.setToken(null);
       }
+      
       setIsSignedIn(false);
+      setAccessToken(null);
       setFiles([]);
       setError(null);
     } catch (err) {
       setError(`Uloskirjautuminen epäonnistui: ${err}`);
     }
-  }, [gapi]);
+  }, [accessToken]);
 
   const loadFiles = useCallback(async (folderId?: string) => {
     if (!isSignedIn) {
@@ -196,7 +240,7 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
       setIsLoading(true);
       setError(null);
 
-      if (gapi && gapi.client && gapi.client.drive && hasValidConfig()) {
+      if (gapi && gapi.client && gapi.client.drive && hasValidConfig() && accessToken) {
         const query = folderId 
           ? `'${folderId}' in parents and trashed=false`
           : "trashed=false";
@@ -225,7 +269,7 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [gapi, isSignedIn, files.length]);
+  }, [gapi, isSignedIn, files.length, accessToken]);
 
   const searchFiles = useCallback(async (query: string) => {
     if (!isSignedIn) {
@@ -237,7 +281,7 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
       setIsLoading(true);
       setError(null);
 
-      if (gapi && gapi.client && gapi.client.drive && hasValidConfig()) {
+      if (gapi && gapi.client && gapi.client.drive && hasValidConfig() && accessToken) {
         const searchQuery = `name contains '${query}' and trashed=false`;
 
         const response = await gapi.client.drive.files.list({
@@ -303,7 +347,7 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [gapi, isSignedIn]);
+  }, [gapi, isSignedIn, accessToken]);
 
   const createShareableLink = useCallback(async (fileId: string): Promise<string> => {
     if (!isSignedIn) {
@@ -311,7 +355,7 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
     }
 
     try {
-      if (gapi && gapi.client && gapi.client.drive && hasValidConfig()) {
+      if (gapi && gapi.client && gapi.client.drive && hasValidConfig() && accessToken) {
         // Try to make the file publicly viewable
         await gapi.client.drive.permissions.create({
           fileId: fileId,
@@ -336,7 +380,7 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
       // If we can't make it public, just return the existing link
       return `https://drive.google.com/file/d/${fileId}/view`;
     }
-  }, [gapi, isSignedIn]);
+  }, [gapi, isSignedIn, accessToken]);
 
   return {
     isSignedIn,
