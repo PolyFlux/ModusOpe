@@ -1,6 +1,31 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { Event, Project, Task, CalendarView, ScheduleTemplate, RecurringClass } from '../types';
 
+// Apufunktio määräaikojen luomiseen säilytetään,
+// koska se toimii myös tyhjällä projektitaulukolla.
+function generateProjectDeadlineEvents(projects: Project[]): Event[] {
+  return projects
+    .filter(project => project.endDate)
+    .map(project => ({
+      id: `deadline-${project.id}`,
+      title: `DL: ${project.name}`,
+      date: project.endDate!,
+      type: 'deadline',
+      color: '#EF4444',
+      projectId: project.id,
+    }));
+}
+
+// ==========================================================================================
+// MUUTOS: Poistetaan kovakoodatut esimerkit.
+// Nämä taulukot ovat nyt tyhjiä, joten sovellus alkaa ilman dataa.
+// ==========================================================================================
+const initialProjects: Project[] = [];
+const initialEvents: Event[] = [];
+
+
+// Tässä säilytetään kaikki muu ennallaan
+// ...
 interface AppState {
   events: Event[];
   projects: Project[];
@@ -42,151 +67,15 @@ type AppAction =
   | { type: 'TOGGLE_RECURRING_CLASS_MODAL'; payload?: RecurringClass }
   | { type: 'CLOSE_MODALS' };
 
+// initialState käyttää nyt tyhjiä taulukoita
 const initialState: AppState = {
   events: [
-    {
-      id: '1',
-      title: 'Matematiikka - Algebra',
-      description: 'Johdatus toisen asteen yhtälöihin',
-      date: new Date(2025, 0, 15, 9, 0),
-      startTime: '09:00',
-      endTime: '10:30',
-      type: 'class',
-      color: '#3B82F6',
-      projectId: 'math-course'
-    },
-    {
-      id: '2',
-      title: 'Tiedekuntakokous',
-      description: 'Kuukausittainen osastokokous',
-      date: new Date(2025, 0, 16, 14, 0),
-      startTime: '14:00',
-      endTime: '15:30',
-      type: 'meeting',
-      color: '#8B5CF6'
-    },
-    {
-      id: '3',
-      title: 'Tehtävä: Essee',
-      description: 'Kirjallisuusanalyysi esseet',
-      date: new Date(2025, 0, 18),
-      type: 'deadline',
-      color: '#EF4444',
-      projectId: 'literature-course'
-    }
+    ...initialEvents,
+    ...generateProjectDeadlineEvents(initialProjects)
   ],
-  projects: [
-    {
-      id: 'math-course',
-      name: 'Matematiikan kurssi',
-      description: 'Algebra ja geometria 10. luokalle',
-      color: '#3B82F6',
-      type: 'course',
-      startDate: new Date(2025, 0, 1),
-      endDate: new Date(2025, 5, 30),
-      tasks: [
-        {
-          id: 'task-1',
-          title: 'Valmistele välikoe',
-          description: 'Luo kysymyksiä luvuista 1-5',
-          completed: false,
-          priority: 'high',
-          dueDate: new Date(2025, 0, 25),
-          projectId: 'math-course'
-        },
-        {
-          id: 'task-2',
-          title: 'Arvioi kotitehtävät',
-          description: 'Tarkista ja arvioi viikon 2 tehtävät',
-          completed: true,
-          priority: 'medium',
-          dueDate: new Date(2025, 0, 14),
-          projectId: 'math-course'
-        }
-      ]
-    },
-    {
-      id: 'literature-course',
-      name: 'Kirjallisuuden kurssi',
-      description: 'Modernin kirjallisuuden analyysi',
-      color: '#10B981',
-      type: 'course',
-      startDate: new Date(2025, 0, 1),
-      endDate: new Date(2025, 5, 30),
-      tasks: [
-        {
-          id: 'task-3',
-          title: 'Suunnittele kirjakeskustelu',
-          description: 'Valmistele keskustelukysymyksiä "Gatsby"-kirjalle',
-          completed: false,
-          priority: 'medium',
-          dueDate: new Date(2025, 0, 20),
-          projectId: 'literature-course'
-        }
-      ]
-    }
-  ],
-  scheduleTemplates: [
-    {
-      id: 'math-9a',
-      name: 'Matematiikka 9A',
-      description: 'Algebra ja geometria',
-      dayOfWeek: 0, // Monday
-      startTime: '08:00',
-      endTime: '09:30',
-      color: '#3B82F6'
-    },
-    {
-      id: 'math-9b',
-      name: 'Matematiikka 9A',
-      description: 'Algebra ja geometria',
-      dayOfWeek: 2, // Wednesday
-      startTime: '10:00',
-      endTime: '11:30',
-      color: '#3B82F6'
-    },
-    {
-      id: 'math-9c',
-      name: 'Matematiikka 9A',
-      description: 'Algebra ja geometria',
-      dayOfWeek: 4, // Friday
-      startTime: '13:00',
-      endTime: '14:30',
-      color: '#3B82F6'
-    }
-  ],
-  recurringClasses: [
-    {
-      id: 'recurring-math-9a-0',
-      title: 'Matematiikka 9A - Syksy',
-      description: 'Syksyn matematiikan tunnit',
-      scheduleTemplateId: 'math-9a',
-      startDate: new Date(2025, 0, 6), // First Monday of year
-      endDate: new Date(2025, 4, 30), // End of May
-      color: '#3B82F6',
-      groupName: 'Matematiikka 9A'
-    },
-    {
-      id: 'recurring-math-9a-1',
-      title: 'Matematiikka 9A - Syksy',
-      description: 'Syksyn matematiikan tunnit',
-      scheduleTemplateId: 'math-9b',
-      startDate: new Date(2025, 0, 6),
-      endDate: new Date(2025, 4, 30),
-      color: '#3B82F6',
-      groupName: 'Matematiikka 9A'
-    },
-    {
-      id: 'recurring-math-9a-2',
-      title: 'Matematiikka 9A - Syksy',
-      description: 'Syksyn matematiikan tunnit',
-      scheduleTemplateId: 'math-9c',
-      startDate: new Date(2025, 0, 6),
-      endDate: new Date(2025, 4, 30),
-      color: '#3B82F6',
-      groupName: 'Matematiikka 9A'
-    }
-  ],
+  projects: initialProjects,
+  scheduleTemplates: [], // Myös muut esimerkit voi halutessaan poistaa
+  recurringClasses: [],  // Esimerkiksi nämä
   currentView: 'month',
   selectedDate: new Date(),
   showEventModal: false,
@@ -195,27 +84,24 @@ const initialState: AppState = {
   showRecurringClassModal: false
 };
 
-// Helper function to generate recurring events
+
 function generateRecurringEvents(recurringClass: RecurringClass, template: ScheduleTemplate): Event[] {
   const events: Event[] = [];
   const startDate = new Date(recurringClass.startDate);
   const endDate = new Date(recurringClass.endDate);
-  
-  // Find the first occurrence of the target day
-  const targetDay = template.dayOfWeek; // 0 = Monday, 1 = Tuesday, etc.
+
+  const targetDay = template.dayOfWeek;
   const currentDate = new Date(startDate);
-  
-  // Adjust to first Monday (since our week starts with Monday = 0)
-  const currentDay = (currentDate.getDay() + 6) % 7; // Convert Sunday=0 to Monday=0 system
+
+  const currentDay = (currentDate.getDay() + 6) % 7;
   const daysToAdd = (targetDay - currentDay + 7) % 7;
   currentDate.setDate(currentDate.getDate() + daysToAdd);
-  
-  // Generate events for each week
+
   while (currentDate <= endDate) {
     const eventDate = new Date(currentDate);
     const [startHour, startMinute] = template.startTime.split(':').map(Number);
     eventDate.setHours(startHour, startMinute, 0, 0);
-    
+
     events.push({
       id: `recurring-${recurringClass.id}-${eventDate.getTime()}`,
       title: recurringClass.title,
@@ -226,13 +112,12 @@ function generateRecurringEvents(recurringClass: RecurringClass, template: Sched
       type: 'class',
       color: recurringClass.color,
       scheduleTemplateId: template.id,
-      groupName: recurringClass.groupName // Lisää ryhmänimi tapahtumaan!
+      groupName: recurringClass.groupName
     });
-    
-    // Move to next week
+
     currentDate.setDate(currentDate.getDate() + 7);
   }
-  
+
   return events;
 }
 
@@ -240,7 +125,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'ADD_EVENT':
       return { ...state, events: [...state.events, action.payload] };
-    
+
     case 'UPDATE_EVENT':
       return {
         ...state,
@@ -248,31 +133,52 @@ function appReducer(state: AppState, action: AppAction): AppState {
           event.id === action.payload.id ? action.payload : event
         )
       };
-    
+
     case 'DELETE_EVENT':
       return {
         ...state,
         events: state.events.filter(event => event.id !== action.payload)
       };
-    
-    case 'ADD_PROJECT':
-      return { ...state, projects: [...state.projects, action.payload] };
-    
-    case 'UPDATE_PROJECT':
+
+    case 'ADD_PROJECT': {
+      const newProjects = [...state.projects, action.payload];
+      const deadlineEvents = generateProjectDeadlineEvents(newProjects);
+      const otherEvents = state.events.filter(event => !event.id.startsWith('deadline-'));
       return {
         ...state,
-        projects: state.projects.map(project =>
-          project.id === action.payload.id ? action.payload : project
-        )
+        projects: newProjects,
+        events: [...otherEvents, ...deadlineEvents]
       };
-    
-    case 'DELETE_PROJECT':
+    }
+
+    case 'UPDATE_PROJECT': {
+      const newProjects = state.projects.map(p =>
+        p.id === action.payload.id ? action.payload : p
+      );
+      const deadlineEvents = generateProjectDeadlineEvents(newProjects);
+      const otherEvents = state.events.filter(event => !event.id.startsWith('deadline-'));
       return {
         ...state,
-        projects: state.projects.filter(project => project.id !== action.payload),
-        events: state.events.filter(event => event.projectId !== action.payload)
+        projects: newProjects,
+        events: [...otherEvents, ...deadlineEvents]
       };
-    
+    }
+
+    case 'DELETE_PROJECT': {
+      const newProjects = state.projects.filter(
+        project => project.id !== action.payload
+      );
+      const deadlineEvents = generateProjectDeadlineEvents(newProjects);
+      const otherEvents = state.events.filter(
+        event => event.projectId !== action.payload && !event.id.startsWith('deadline-')
+      );
+      return {
+        ...state,
+        projects: newProjects,
+        events: [...otherEvents, ...deadlineEvents]
+      };
+    }
+
     case 'ADD_TASK':
       return {
         ...state,
@@ -282,7 +188,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
             : project
         )
       };
-    
+
     case 'UPDATE_TASK':
       return {
         ...state,
@@ -297,7 +203,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
             : project
         )
       };
-    
+
     case 'DELETE_TASK':
       return {
         ...state,
@@ -310,10 +216,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
             : project
         )
       };
-    
+
     case 'ADD_SCHEDULE_TEMPLATE':
       return { ...state, scheduleTemplates: [...state.scheduleTemplates, action.payload] };
-    
+
     case 'UPDATE_SCHEDULE_TEMPLATE':
       return {
         ...state,
@@ -321,7 +227,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
           template.id === action.payload.id ? action.payload : template
         )
       };
-    
+
     case 'DELETE_SCHEDULE_TEMPLATE':
       return {
         ...state,
@@ -329,33 +235,31 @@ function appReducer(state: AppState, action: AppAction): AppState {
         recurringClasses: state.recurringClasses.filter(rc => rc.scheduleTemplateId !== action.payload),
         events: state.events.filter(event => event.scheduleTemplateId !== action.payload)
       };
-    
+
     case 'ADD_RECURRING_CLASS': {
       const template = state.scheduleTemplates.find(t => t.id === action.payload.scheduleTemplateId);
       if (!template) return state;
-      
+
       const newEvents = generateRecurringEvents(action.payload, template);
-      
+
       return {
         ...state,
         recurringClasses: [...state.recurringClasses, action.payload],
         events: [...state.events, ...newEvents]
       };
     }
-    
+
     case 'UPDATE_RECURRING_CLASS': {
       const template = state.scheduleTemplates.find(t => t.id === action.payload.scheduleTemplateId);
       if (!template) return state;
-      
-      // Remove old recurring events
-      const eventsWithoutOldRecurring = state.events.filter(event => 
-        !event.scheduleTemplateId || 
+
+      const eventsWithoutOldRecurring = state.events.filter(event =>
+        !event.scheduleTemplateId ||
         !event.id.startsWith(`recurring-${action.payload.id}-`)
       );
-      
-      // Generate new recurring events
+
       const newEvents = generateRecurringEvents(action.payload, template);
-      
+
       return {
         ...state,
         recurringClasses: state.recurringClasses.map(rc =>
@@ -364,50 +268,50 @@ function appReducer(state: AppState, action: AppAction): AppState {
         events: [...eventsWithoutOldRecurring, ...newEvents]
       };
     }
-    
+
     case 'DELETE_RECURRING_CLASS':
       return {
         ...state,
         recurringClasses: state.recurringClasses.filter(rc => rc.id !== action.payload),
-        events: state.events.filter(event => 
+        events: state.events.filter(event =>
           !event.id.startsWith(`recurring-${action.payload}-`)
         )
       };
-    
+
     case 'SET_VIEW':
       return { ...state, currentView: action.payload };
-    
+
     case 'SET_SELECTED_DATE':
       return { ...state, selectedDate: action.payload };
-    
+
     case 'TOGGLE_EVENT_MODAL':
       return {
         ...state,
         showEventModal: !state.showEventModal,
         selectedEvent: action.payload
       };
-    
+
     case 'TOGGLE_PROJECT_MODAL':
       return {
         ...state,
         showProjectModal: !state.showProjectModal,
         selectedProjectId: action.payload
       };
-    
+
     case 'TOGGLE_SCHEDULE_TEMPLATE_MODAL':
       return {
         ...state,
         showScheduleTemplateModal: !state.showScheduleTemplateModal,
         selectedScheduleTemplate: action.payload
       };
-    
+
     case 'TOGGLE_RECURRING_CLASS_MODAL':
       return {
         ...state,
         showRecurringClassModal: !state.showRecurringClassModal,
         selectedRecurringClass: action.payload
       };
-    
+
     case 'CLOSE_MODALS':
       return {
         ...state,
@@ -420,7 +324,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
         selectedScheduleTemplate: undefined,
         selectedRecurringClass: undefined
       };
-    
+
     default:
       return state;
   }
