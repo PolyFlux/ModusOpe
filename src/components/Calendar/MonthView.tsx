@@ -18,17 +18,23 @@ export default function MonthView() {
     dispatch({ type: 'SET_SELECTED_DATE', payload: date });
   };
 
+  // ==========================================================================================
+  // MUUTOS: Päivitetään klikkauksen käsittely
+  // ==========================================================================================
   const handleEventClick = (event: Event, e: React.MouseEvent) => {
     e.stopPropagation();
-    dispatch({ type: 'TOGGLE_EVENT_MODAL', payload: event });
+    // Jos tapahtuma on määräaika, avataan projektimodaali. Muuten tapahtumamodaali.
+    if (event.type === 'deadline' && event.projectId) {
+      dispatch({ type: 'TOGGLE_PROJECT_MODAL', payload: event.projectId });
+    } else {
+      dispatch({ type: 'TOGGLE_EVENT_MODAL', payload: event });
+    }
   };
 
-  // Suomalainen viikkojärjestys: Ma, Ti, Ke, To, Pe, La, Su
   const weekDays = ['Ma', 'Ti', 'Ke', 'To', 'Pe', 'La', 'Su'];
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-      {/* Week headers */}
       <div className="grid grid-cols-7 border-b border-gray-200">
         {weekDays.map((day) => (
           <div key={day} className="p-4 text-center text-sm font-medium text-gray-600">
@@ -37,7 +43,6 @@ export default function MonthView() {
         ))}
       </div>
 
-      {/* Calendar grid */}
       <div className="grid grid-cols-7">
         {daysInMonth.map((date, index) => {
           const dayEvents = getEventsForDay(date);
