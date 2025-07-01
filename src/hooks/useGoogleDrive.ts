@@ -25,7 +25,6 @@ interface UseGoogleDriveReturn {
 }
 
 // Google API configuration
-const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/drive/v3/rest';
 const SCOPES = 'https://www.googleapis.com/auth/drive.readonly';
 
 export function useGoogleDrive(): UseGoogleDriveReturn {
@@ -33,7 +32,6 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<GoogleDriveFile[]>([]);
-  const [gapi, setGapi] = useState<any>(null);
   const [tokenClient, setTokenClient] = useState<any>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
@@ -48,20 +46,44 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
            clientId !== 'your_google_client_id_here.apps.googleusercontent.com';
   };
 
-  // Initialize Google API
+  // Make REST API call to Google Drive
+  const makeApiCall = async (endpoint: string, params: Record<string, string> = {}) => {
+    if (!accessToken) {
+      throw new Error('No access token available');
+    }
+
+    const url = new URL(`https://www.googleapis.com/drive/v3/${endpoint}`);
+    
+    // Add API key and access token
+    url.searchParams.append('key', import.meta.env.VITE_GOOGLE_API_KEY);
+    
+    // Add other parameters
+    Object.entries(params).forEach(([key, value]) => {
+      url.searchParams.append(key, value);
+    });
+
+    const response = await fetch(url.toString(), {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Accept': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`API call failed: ${response.status} ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
+    }
+
+    return response.json();
+  };
+
+  // Initialize Google Identity Services
   useEffect(() => {
-    const initializeGapi = async () => {
+    const initializeGoogleAuth = async () => {
       try {
         // Check if we have valid configuration
         if (!hasValidConfig()) {
           setError('Google Drive -integraatio vaatii oikeat API-tunnukset. Katso README.md -tiedostosta ohjeet.');
-          // Load demo files instead
-          loadDemoFiles();
-          return;
-        }
-
-        if (typeof window.gapi === 'undefined') {
-          setError('Google API ei latautunut. Tarkista internetyhteytesi.');
           loadDemoFiles();
           return;
         }
@@ -72,35 +94,59 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
           return;
         }
 
-        // Initialize gapi client
-        await new Promise<void>((resolve) => {
-          window.gapi.load('client', resolve);
-        });
-
-        await window.gapi.client.init({
-          apiKey: import.meta.env.VITE_GOOGLE_API_KEY,
-          discoveryDocs: [DISCOVERY_DOC],
-        });
-
-        // Initialize Google Identity Services - simplified without callback
+        // Initialize Google Identity Services
         const client = window.google.accounts.oauth2.initTokenClient({
           client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
           scope: SCOPES,
-          ux_mode: 'popup'
+          ux_mode: 'popup',
+          callback: (response: any) => {
+            console.log('Token response received:', response);
+            
+            if (response.error) {
+              console.error('Token error:', response.error);
+              setError(`Kirjautumisvirhe: ${response.error}`);
+              setIsLoading(false);
+              loadDemoFiles();
+              setIsSignedIn(true);
+              return;
+            }
+            
+            if (response.access_token) {
+              console.log('Access token received successfully');
+              setAccessToken(response.access_token);
+              setIsSignedIn(true);
+              setError(null);
+              
+              // Auto-load files after successful authentication
+              setTimeout(async () => {
+                try {
+                  await loadFilesWithToken(response.access_token);
+                  setIsLoading(false);
+                } catch (err) {
+                  console.error('Error loading files after auth:', err);
+                  setIsLoading(false);
+                }
+              }, 100);
+            } else {
+              setError('Ei saatu access tokenia');
+              setIsLoading(false);
+              loadDemoFiles();
+              setIsSignedIn(true);
+            }
+          }
         });
 
         setTokenClient(client);
-        setGapi(window.gapi);
         setError(null);
-        console.log('Google API initialized successfully');
+        console.log('Google Identity Services initialized successfully');
       } catch (err) {
-        console.log('Google API initialization failed, using demo mode:', err);
+        console.log('Google Identity Services initialization failed, using demo mode:', err);
         setError('Google API ei ole käytettävissä. Käytetään demo-tilaa.');
         loadDemoFiles();
       }
     };
 
-    initializeGapi();
+    initializeGoogleAuth();
   }, []);
 
   const loadDemoFiles = () => {
@@ -146,7 +192,44 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
       }
     ];
     setFiles(demoFiles);
-    setIsSignedIn(true); // Set as signed in for demo mode
+    setIsSignedIn(true);
+  };
+
+  const loadFilesWithToken = async (token: string, folderId?: string) => {
+    try {
+      const query = folderId 
+        ? `'${folderId}' in parents and trashed=false`
+        : "trashed=false";
+
+      console.log('Loading files from Google Drive via REST API...');
+      
+      const url = new URL('https://www.googleapis.com/drive/v3/files');
+      url.searchParams.append('key', import.meta.env.VITE_GOOGLE_API_KEY);
+      url.searchParams.append('q', query);
+      url.searchParams.append('pageSize', '50');
+      url.searchParams.append('fields', 'files(id,name,mimeType,size,modifiedTime,webViewLink,webContentLink,thumbnailLink,iconLink)');
+      url.searchParams.append('orderBy', 'modifiedTime desc');
+
+      const response = await fetch(url.toString(), {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`API call failed: ${response.status} ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
+      }
+
+      const data = await response.json();
+      const driveFiles: GoogleDriveFile[] = data.files || [];
+      setFiles(driveFiles);
+      console.log(`Loaded ${driveFiles.length} files from Google Drive`);
+    } catch (err) {
+      console.error('Error loading files:', err);
+      throw err;
+    }
   };
 
   const signIn = useCallback(async () => {
@@ -168,10 +251,7 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
         if (accessToken) {
           try {
             // Test if the current token is still valid
-            await window.gapi.client.drive.files.list({
-              pageSize: 1,
-              fields: 'files(id)'
-            });
+            await loadFilesWithToken(accessToken);
             setIsSignedIn(true);
             setIsLoading(false);
             return;
@@ -181,75 +261,9 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
           }
         }
 
-        // Request new access token using Promise-based approach
+        // Request new access token
         console.log('Requesting access token...');
-        
-        return new Promise<void>((resolve, reject) => {
-          try {
-            // Set up a one-time callback
-            const originalCallback = tokenClient.callback;
-            
-            tokenClient.callback = (response: any) => {
-              // Restore original callback
-              tokenClient.callback = originalCallback;
-              
-              console.log('Token response received:', response);
-              
-              if (response.error) {
-                console.error('Token error:', response.error);
-                setError(`Kirjautumisvirhe: ${response.error}`);
-                setIsLoading(false);
-                // Fallback to demo mode
-                loadDemoFiles();
-                setIsSignedIn(true);
-                reject(new Error(response.error));
-                return;
-              }
-              
-              if (response.access_token) {
-                console.log('Access token received successfully');
-                setAccessToken(response.access_token);
-                setIsSignedIn(true);
-                setError(null);
-                
-                // Set the access token for gapi client
-                window.gapi.client.setToken({
-                  access_token: response.access_token
-                });
-                
-                // Auto-load files after successful authentication
-                setTimeout(async () => {
-                  try {
-                    await loadFiles();
-                    setIsLoading(false);
-                    resolve();
-                  } catch (err) {
-                    console.error('Error loading files after auth:', err);
-                    setIsLoading(false);
-                    resolve(); // Still resolve as auth was successful
-                  }
-                }, 100);
-              } else {
-                setError('Ei saatu access tokenia');
-                setIsLoading(false);
-                loadDemoFiles();
-                setIsSignedIn(true);
-                reject(new Error('No access token received'));
-              }
-            };
-            
-            // Request the token
-            tokenClient.requestAccessToken({ prompt: 'consent' });
-            
-          } catch (err) {
-            console.error('Error in token request:', err);
-            setError(`Kirjautuminen epäonnistui: ${err}`);
-            setIsLoading(false);
-            loadDemoFiles();
-            setIsSignedIn(true);
-            reject(err);
-          }
-        });
+        tokenClient.requestAccessToken({ prompt: 'consent' });
         
       } else {
         throw new Error('Google Identity Services ei ole alustettu');
@@ -271,9 +285,6 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
         window.google.accounts.oauth2.revoke(accessToken, () => {
           console.log('Access token revoked');
         });
-        
-        // Clear the token from gapi client
-        window.gapi.client.setToken(null);
       }
       
       setIsSignedIn(false);
@@ -295,22 +306,8 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
       setIsLoading(true);
       setError(null);
 
-      if (gapi && gapi.client && gapi.client.drive && hasValidConfig() && accessToken) {
-        const query = folderId 
-          ? `'${folderId}' in parents and trashed=false`
-          : "trashed=false";
-
-        console.log('Loading files from Google Drive...');
-        const response = await gapi.client.drive.files.list({
-          q: query,
-          pageSize: 50,
-          fields: 'files(id,name,mimeType,size,modifiedTime,webViewLink,webContentLink,thumbnailLink,iconLink)',
-          orderBy: 'modifiedTime desc'
-        });
-
-        const driveFiles: GoogleDriveFile[] = response.result.files || [];
-        setFiles(driveFiles);
-        console.log(`Loaded ${driveFiles.length} files from Google Drive`);
+      if (hasValidConfig() && accessToken) {
+        await loadFilesWithToken(accessToken, folderId);
       } else {
         // Demo mode - files are already loaded
         if (files.length === 0) {
@@ -327,7 +324,7 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [gapi, isSignedIn, files.length, accessToken]);
+  }, [isSignedIn, files.length, accessToken]);
 
   const searchFiles = useCallback(async (query: string) => {
     if (!isSignedIn) {
@@ -339,17 +336,30 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
       setIsLoading(true);
       setError(null);
 
-      if (gapi && gapi.client && gapi.client.drive && hasValidConfig() && accessToken) {
+      if (hasValidConfig() && accessToken) {
         const searchQuery = `name contains '${query}' and trashed=false`;
+        
+        const url = new URL('https://www.googleapis.com/drive/v3/files');
+        url.searchParams.append('key', import.meta.env.VITE_GOOGLE_API_KEY);
+        url.searchParams.append('q', searchQuery);
+        url.searchParams.append('pageSize', '50');
+        url.searchParams.append('fields', 'files(id,name,mimeType,size,modifiedTime,webViewLink,webContentLink,thumbnailLink,iconLink)');
+        url.searchParams.append('orderBy', 'modifiedTime desc');
 
-        const response = await gapi.client.drive.files.list({
-          q: searchQuery,
-          pageSize: 50,
-          fields: 'files(id,name,mimeType,size,modifiedTime,webViewLink,webContentLink,thumbnailLink,iconLink)',
-          orderBy: 'modifiedTime desc'
+        const response = await fetch(url.toString(), {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Accept': 'application/json',
+          },
         });
 
-        const driveFiles: GoogleDriveFile[] = response.result.files || [];
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(`Search failed: ${response.status} ${response.statusText} - ${errorData.error?.message || 'Unknown error'}`);
+        }
+
+        const data = await response.json();
+        const driveFiles: GoogleDriveFile[] = data.files || [];
         setFiles(driveFiles);
       } else {
         // Demo mode - filter demo files
@@ -405,7 +415,7 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [gapi, isSignedIn, accessToken]);
+  }, [isSignedIn, accessToken]);
 
   const createShareableLink = useCallback(async (fileId: string): Promise<string> => {
     if (!isSignedIn) {
@@ -413,32 +423,44 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
     }
 
     try {
-      if (gapi && gapi.client && gapi.client.drive && hasValidConfig() && accessToken) {
+      if (hasValidConfig() && accessToken) {
         // Try to make the file publicly viewable
-        await gapi.client.drive.permissions.create({
-          fileId: fileId,
-          resource: {
+        const permissionUrl = `https://www.googleapis.com/drive/v3/files/${fileId}/permissions`;
+        
+        await fetch(`${permissionUrl}?key=${import.meta.env.VITE_GOOGLE_API_KEY}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
             role: 'reader',
             type: 'anyone'
-          }
+          })
         });
 
         // Get the file details to return the webViewLink
-        const response = await gapi.client.drive.files.get({
-          fileId: fileId,
-          fields: 'webViewLink'
+        const fileUrl = `https://www.googleapis.com/drive/v3/files/${fileId}`;
+        const response = await fetch(`${fileUrl}?key=${import.meta.env.VITE_GOOGLE_API_KEY}&fields=webViewLink`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Accept': 'application/json',
+          },
         });
 
-        return response.result.webViewLink;
-      } else {
-        // Demo mode
-        return `https://drive.google.com/file/d/${fileId}/view`;
+        if (response.ok) {
+          const data = await response.json();
+          return data.webViewLink;
+        }
       }
+      
+      // Fallback or demo mode
+      return `https://drive.google.com/file/d/${fileId}/view`;
     } catch (err) {
       // If we can't make it public, just return the existing link
       return `https://drive.google.com/file/d/${fileId}/view`;
     }
-  }, [gapi, isSignedIn, accessToken]);
+  }, [isSignedIn, accessToken]);
 
   return {
     isSignedIn,
@@ -456,7 +478,6 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
 // Extend window object for TypeScript
 declare global {
   interface Window {
-    gapi: any;
     google: any;
   }
 }
