@@ -122,7 +122,7 @@ export default function WeekView() {
                 {/* Kellonajat */}
                 <div className="col-start-1">
                     {timeSlots.filter((_, i) => i >= 6 && i <= 22).map((time) => (
-                        <div key={time} className="h-12 text-xs text-gray-500 pr-2 text-right flex items-start -mt-2">{time}</div>
+                        <div key={time} className="h-12 text-xs text-gray-500 pr-2 text-right flex items-start">{time}</div>
                     ))}
                 </div>
                 {/* Ruudukon viivat */}
