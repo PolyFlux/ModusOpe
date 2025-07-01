@@ -1,10 +1,23 @@
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
-import { formatDate, isSameDay } from '../../utils/dateUtils';
+import { formatDate, isSameDay, addDays } from '../../utils/dateUtils';
+import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { Event } from '../../types';
 
 export default function DayView() {
   const { state, dispatch } = useApp();
+  const navigateDay = (direction: 'prev' | 'next') => {
+    const newDate = addDays(selectedDate, direction === 'next' ? 1 : -1);
+    dispatch({ type: 'SET_SELECTED_DATE', payload: newDate });
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDate = new Date(e.target.value);
+    // Korjaa aikavyöhykkeen aiheuttama virhe
+    const timezoneOffset = newDate.getTimezoneOffset() * 60000;
+    const adjustedDate = new Date(newDate.getTime() + timezoneOffset);
+    dispatch({ type: 'SET_SELECTED_DATE', payload: adjustedDate });
+  };
   const { selectedDate, events } = state;
 
   const dayEvents = events.filter(event => 
@@ -22,13 +35,30 @@ export default function DayView() {
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-      {/* Day header */}
-      <div className="p-6 border-b border-gray-200">
-        <h3 className="text-xl font-semibold text-gray-900">
-          {formatDate(selectedDate)}
-        </h3>
-        <p className="text-sm text-gray-600 mt-1">
-          {dayEvents.length} event{dayEvents.length !== 1 ? 's' : ''}
+{/* Day header */}
+      <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <button onClick={() => navigateDay('prev')} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <h3 className="text-xl font-semibold text-gray-900">
+            {formatDate(selectedDate)}
+          </h3>
+          <button onClick={() => navigateDay('next')} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+            <ChevronRight className="w-5 h-5" />
+          </button>
+          <div className="relative">
+            <input
+              type="date"
+              value={selectedDate.toISOString().split('T')[0]}
+              onChange={handleDateChange}
+              className="absolute opacity-0 w-8 h-8 cursor-pointer"
+            />
+            <Calendar className="w-5 h-5 text-gray-500 hover:text-gray-700 cursor-pointer" />
+          </div>
+        </div>
+        <p className="text-sm text-gray-600">
+          {dayEvents.length} tapahtuma{dayEvents.length !== 1 ? 'a' : ''}
         </p>
       </div>
 
