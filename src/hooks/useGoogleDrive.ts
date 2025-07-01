@@ -36,6 +36,7 @@ export function useGoogleDrive(): UseGoogleDriveReturn {
   const [accessToken, setAccessToken] = useState<string | null>(null);
 
   const hasValidConfig = () => {
+    console.log('API Key:', import.meta.env.VITE_GOOGLE_API_KEY, 'Client ID:', import.meta.env.VITE_GOOGLE_CLIENT_ID);
     const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
     return apiKey && clientId && apiKey !== 'your_google_api_key_here' && clientId !== 'your_google_client_id_here.apps.googleusercontent.com';
