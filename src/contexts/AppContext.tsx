@@ -1,14 +1,13 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { Event, Project, Task, CalendarView, ScheduleTemplate, RecurringClass } from '../types';
 
-// Apufunktio määräaikojen luomiseen säilytetään,
-// koska se toimii myös tyhjällä projektitaulukolla.
+// APUFUNKTIO 1: Luo tapahtumat projektien määräajoista
 function generateProjectDeadlineEvents(projects: Project[]): Event[] {
   return projects
     .filter(project => project.endDate)
     .map(project => ({
-      id: `deadline-${project.id}`,
-      title: `DL: ${project.name}`,
+      id: `project-deadline-${project.id}`,
+      title: `${project.name}`, // "DL:"-etuliite poistettu
       date: project.endDate!,
       type: 'deadline',
       color: '#EF4444',
@@ -16,16 +15,25 @@ function generateProjectDeadlineEvents(projects: Project[]): Event[] {
     }));
 }
 
-// ==========================================================================================
-// MUUTOS: Poistetaan kovakoodatut esimerkit.
-// Nämä taulukot ovat nyt tyhjiä, joten sovellus alkaa ilman dataa.
-// ==========================================================================================
+// APUFUNKTIO 2: Luo tapahtumat tehtävien määräajoista
+function generateTaskDeadlineEvents(projects: Project[]): Event[] {
+    const allTasks = projects.flatMap(p => p.tasks);
+    return allTasks
+        .filter(task => task.dueDate)
+        .map(task => ({
+            id: `task-deadline-${task.id}`,
+            title: task.title,
+            date: task.dueDate!,
+            type: 'deadline',
+            color: '#F59E0B', // Keltainen väri tehtävän määräajoille
+            projectId: task.projectId,
+        }));
+}
+
+
 const initialProjects: Project[] = [];
 const initialEvents: Event[] = [];
 
-
-// Tässä säilytetään kaikki muu ennallaan
-// ...
 interface AppState {
   events: Event[];
   projects: Project[];
@@ -67,15 +75,15 @@ type AppAction =
   | { type: 'TOGGLE_RECURRING_CLASS_MODAL'; payload?: RecurringClass }
   | { type: 'CLOSE_MODALS' };
 
-// initialState käyttää nyt tyhjiä taulukoita
 const initialState: AppState = {
   events: [
     ...initialEvents,
-    ...generateProjectDeadlineEvents(initialProjects)
+    ...generateProjectDeadlineEvents(initialProjects),
+    ...generateTaskDeadlineEvents(initialProjects)
   ],
   projects: initialProjects,
-  scheduleTemplates: [], // Myös muut esimerkit voi halutessaan poistaa
-  recurringClasses: [],  // Esimerkiksi nämä
+  scheduleTemplates: [],
+  recurringClasses: [],
   currentView: 'month',
   selectedDate: new Date(),
   showEventModal: false,
@@ -121,6 +129,15 @@ function generateRecurringEvents(recurringClass: RecurringClass, template: Sched
   return events;
 }
 
+// Yhdistetty funktio kaikkien kalenteritapahtumien päivittämiseen
+function updateAllEvents(state: AppState, updatedProjects: Project[]): Event[] {
+    const nonDeadlineEvents = state.events.filter(e => !e.id.startsWith('project-deadline-') && !e.id.startsWith('task-deadline-'));
+    const projectDeadlines = generateProjectDeadlineEvents(updatedProjects);
+    const taskDeadlines = generateTaskDeadlineEvents(updatedProjects);
+    return [...nonDeadlineEvents, ...projectDeadlines, ...taskDeadlines];
+}
+
+
 function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'ADD_EVENT':
@@ -142,12 +159,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
     case 'ADD_PROJECT': {
       const newProjects = [...state.projects, action.payload];
-      const deadlineEvents = generateProjectDeadlineEvents(newProjects);
-      const otherEvents = state.events.filter(event => !event.id.startsWith('deadline-'));
       return {
         ...state,
         projects: newProjects,
-        events: [...otherEvents, ...deadlineEvents]
+        events: updateAllEvents(state, newProjects)
       };
     }
 
@@ -155,12 +170,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
       const newProjects = state.projects.map(p =>
         p.id === action.payload.id ? action.payload : p
       );
-      const deadlineEvents = generateProjectDeadlineEvents(newProjects);
-      const otherEvents = state.events.filter(event => !event.id.startsWith('deadline-'));
       return {
         ...state,
         projects: newProjects,
-        events: [...otherEvents, ...deadlineEvents]
+        events: updateAllEvents(state, newProjects)
       };
     }
 
@@ -168,187 +181,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
       const newProjects = state.projects.filter(
         project => project.id !== action.payload
       );
-      const deadlineEvents = generateProjectDeadlineEvents(newProjects);
       const otherEvents = state.events.filter(
-        event => event.projectId !== action.payload && !event.id.startsWith('deadline-')
+        event => event.projectId !== action.payload
       );
-      return {
-        ...state,
-        projects: newProjects,
-        events: [...otherEvents, ...deadlineEvents]
-      };
-    }
-
-    case 'ADD_TASK':
-      return {
-        ...state,
-        projects: state.projects.map(project =>
-          project.id === action.payload.projectId
-            ? { ...project, tasks: [...project.tasks, action.payload.task] }
-            : project
-        )
-      };
-
-    case 'UPDATE_TASK':
-      return {
-        ...state,
-        projects: state.projects.map(project =>
-          project.id === action.payload.projectId
-            ? {
-                ...project,
-                tasks: project.tasks.map(task =>
-                  task.id === action.payload.task.id ? action.payload.task : task
-                )
-              }
-            : project
-        )
-      };
-
-    case 'DELETE_TASK':
-      return {
-        ...state,
-        projects: state.projects.map(project =>
-          project.id === action.payload.projectId
-            ? {
-                ...project,
-                tasks: project.tasks.filter(task => task.id !== action.payload.taskId)
-              }
-            : project
-        )
-      };
-
-    case 'ADD_SCHEDULE_TEMPLATE':
-      return { ...state, scheduleTemplates: [...state.scheduleTemplates, action.payload] };
-
-    case 'UPDATE_SCHEDULE_TEMPLATE':
-      return {
-        ...state,
-        scheduleTemplates: state.scheduleTemplates.map(template =>
-          template.id === action.payload.id ? action.payload : template
-        )
-      };
-
-    case 'DELETE_SCHEDULE_TEMPLATE':
-      return {
-        ...state,
-        scheduleTemplates: state.scheduleTemplates.filter(template => template.id !== action.payload),
-        recurringClasses: state.recurringClasses.filter(rc => rc.scheduleTemplateId !== action.payload),
-        events: state.events.filter(event => event.scheduleTemplateId !== action.payload)
-      };
-
-    case 'ADD_RECURRING_CLASS': {
-      const template = state.scheduleTemplates.find(t => t.id === action.payload.scheduleTemplateId);
-      if (!template) return state;
-
-      const newEvents = generateRecurringEvents(action.payload, template);
-
-      return {
-        ...state,
-        recurringClasses: [...state.recurringClasses, action.payload],
-        events: [...state.events, ...newEvents]
-      };
-    }
-
-    case 'UPDATE_RECURRING_CLASS': {
-      const template = state.scheduleTemplates.find(t => t.id === action.payload.scheduleTemplateId);
-      if (!template) return state;
-
-      const eventsWithoutOldRecurring = state.events.filter(event =>
-        !event.scheduleTemplateId ||
-        !event.id.startsWith(`recurring-${action.payload.id}-`)
-      );
-
-      const newEvents = generateRecurringEvents(action.payload, template);
-
-      return {
-        ...state,
-        recurringClasses: state.recurringClasses.map(rc =>
-          rc.id === action.payload.id ? action.payload : rc
-        ),
-        events: [...eventsWithoutOldRecurring, ...newEvents]
-      };
-    }
-
-    case 'DELETE_RECURRING_CLASS':
-      return {
-        ...state,
-        recurringClasses: state.recurringClasses.filter(rc => rc.id !== action.payload),
-        events: state.events.filter(event =>
-          !event.id.startsWith(`recurring-${action.payload}-`)
-        )
-      };
-
-    case 'SET_VIEW':
-      return { ...state, currentView: action.payload };
-
-    case 'SET_SELECTED_DATE':
-      return { ...state, selectedDate: action.payload };
-
-    case 'TOGGLE_EVENT_MODAL':
-      return {
-        ...state,
-        showEventModal: !state.showEventModal,
-        selectedEvent: action.payload
-      };
-
-    case 'TOGGLE_PROJECT_MODAL':
-      return {
-        ...state,
-        showProjectModal: !state.showProjectModal,
-        selectedProjectId: action.payload
-      };
-
-    case 'TOGGLE_SCHEDULE_TEMPLATE_MODAL':
-      return {
-        ...state,
-        showScheduleTemplateModal: !state.showScheduleTemplateModal,
-        selectedScheduleTemplate: action.payload
-      };
-
-    case 'TOGGLE_RECURRING_CLASS_MODAL':
-      return {
-        ...state,
-        showRecurringClassModal: !state.showRecurringClassModal,
-        selectedRecurringClass: action.payload
-      };
-
-    case 'CLOSE_MODALS':
-      return {
-        ...state,
-        showEventModal: false,
-        showProjectModal: false,
-        showScheduleTemplateModal: false,
-        showRecurringClassModal: false,
-        selectedEvent: undefined,
-        selectedProjectId: undefined,
-        selectedScheduleTemplate: undefined,
-        selectedRecurringClass: undefined
-      };
-
-    default:
-      return state;
-  }
-}
-
-const AppContext = createContext<{
-  state: AppState;
-  dispatch: React.Dispatch<AppAction>;
-} | null>(null);
-
-export function AppProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(appReducer, initialState);
-
-  return (
-    <AppContext.Provider value={{ state, dispatch }}>
-      {children}
-    </AppContext.Provider>
-  );
-}
-
-export function useApp() {
-  const context = useContext(AppContext);
-  if (!context) {
-    throw new Error('useApp must be used within AppProvider');
-  }
-  return context;
-}
+      const nonDeadlineEvents = otherEvents.filter(e => !e.id.startsWith('project-deadline-') && !e.id.startsWith('task-deadline-'));
+      const projectDeadlines
