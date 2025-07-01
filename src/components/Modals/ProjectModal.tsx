@@ -8,7 +8,7 @@ export default function ProjectModal() {
   const { state, dispatch } = useApp();
   const { showProjectModal, selectedProjectId, projects } = state;
 
-  const selectedProject = selectedProjectId 
+  const selectedProject = selectedProjectId
     ? projects.find(p => p.id === selectedProjectId)
     : null;
 
@@ -22,15 +22,11 @@ export default function ProjectModal() {
     endDate: ''
   });
 
-  // File management state
-  const [files, setFiles] = useState<Array<{
-    id: string;
-    name: string;
-    type: 'upload' | 'google-drive';
-    url?: string;
-    size?: number;
-    uploadDate: Date;
-  }>>([]);
+  // ==========================================================================================
+  // MUUTOS 1: Väliaikainen tila uusille tehtäville
+  // ==========================================================================================
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [files, setFiles] = useState<any[]>([]);
   const [googleDriveUrl, setGoogleDriveUrl] = useState('');
   const [showGoogleDriveBrowser, setShowGoogleDriveBrowser] = useState(false);
 
@@ -53,8 +49,10 @@ export default function ProjectModal() {
         startDate: selectedProject.startDate.toISOString().split('T')[0],
         endDate: selectedProject.endDate?.toISOString().split('T')[0] || ''
       });
+      setTasks(selectedProject.tasks || []);
       setFiles(selectedProject.files || []);
     } else {
+      // Reset for new project
       setFormData({
         name: '',
         description: '',
@@ -63,13 +61,14 @@ export default function ProjectModal() {
         startDate: new Date().toISOString().split('T')[0],
         endDate: ''
       });
+      setTasks([]); // Aloita tyhjällä tehtävälistalla
       setFiles([]);
     }
     setShowAddTask(false);
     setActiveTab('details');
     setGoogleDriveUrl('');
     setShowGoogleDriveBrowser(false);
-  }, [selectedProject]);
+  }, [selectedProject, showProjectModal]);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const uploadedFiles = Array.from(event.target.files || []);
@@ -85,16 +84,14 @@ export default function ProjectModal() {
 
   const handleGoogleDriveAdd = () => {
     if (!googleDriveUrl.trim()) return;
-    
+
     let fileName = 'Google Drive -tiedosto';
     try {
       const url = new URL(googleDriveUrl);
       const pathParts = url.pathname.split('/');
       const fileId = pathParts[pathParts.indexOf('d') + 1] || pathParts[pathParts.length - 1];
       fileName = `Google Drive -tiedosto (${fileId.substring(0, 8)}...)`;
-    } catch (e) {
-      // Use default name if URL parsing fails
-    }
+    } catch (e) {}
 
     const newFile = {
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
@@ -103,12 +100,11 @@ export default function ProjectModal() {
       url: googleDriveUrl,
       uploadDate: new Date()
     };
-    
     setFiles(prev => [...prev, newFile]);
     setGoogleDriveUrl('');
   };
 
-  const handleGoogleDriveFilesSelected = (selectedFiles: any[]) => {
+    const handleGoogleDriveFilesSelected = (selectedFiles: any[]) => {
     const newFiles = selectedFiles.map(file => ({
       id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
       name: file.name,
@@ -117,7 +113,6 @@ export default function ProjectModal() {
       size: file.size ? parseInt(file.size) : undefined,
       uploadDate: new Date()
     }));
-    
     setFiles(prev => [...prev, ...newFiles]);
     setShowGoogleDriveBrowser(false);
   };
@@ -126,26 +121,21 @@ export default function ProjectModal() {
     setFiles(prev => prev.filter(file => file.id !== fileId));
   };
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const projectId = selectedProject?.id || Date.now().toString();
     
     const projectData: Project = {
-      id: selectedProject?.id || Date.now().toString(),
+      id: projectId,
       name: formData.name,
       description: formData.description,
       type: formData.type,
       color: formData.color,
       startDate: new Date(formData.startDate),
       endDate: formData.endDate ? new Date(formData.endDate) : undefined,
-      tasks: selectedProject?.tasks || [],
+      tasks: tasks.map(t => ({...t, projectId })), // Varmistetaan projectId
       files: files
     };
 
@@ -158,10 +148,11 @@ export default function ProjectModal() {
     dispatch({ type: 'CLOSE_MODALS' });
   };
 
+  // ==========================================================================================
+  // MUUTOS 2: Tehtävien käsittely paikallisessa tilassa
+  // ==========================================================================================
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!selectedProject) return;
 
     const taskData: Task = {
       id: Date.now().toString(),
@@ -170,36 +161,20 @@ export default function ProjectModal() {
       completed: false,
       priority: newTask.priority,
       dueDate: newTask.dueDate ? new Date(newTask.dueDate) : undefined,
-      projectId: selectedProject.id
+      projectId: selectedProject?.id || 'temp-id'
     };
+    setTasks([...tasks, taskData]); // Lisätään tehtävä paikalliseen tilaan
 
-    dispatch({
-      type: 'ADD_TASK',
-      payload: {
-        projectId: selectedProject.id,
-        task: taskData
-      }
-    });
-
-    setNewTask({
-      title: '',
-      description: '',
-      priority: 'medium',
-      dueDate: ''
-    });
+    setNewTask({ title: '', description: '', priority: 'medium', dueDate: '' });
     setShowAddTask(false);
   };
 
   const handleDeleteTask = (taskId: string) => {
-    if (!selectedProject) return;
-    
-    dispatch({
-      type: 'DELETE_TASK',
-      payload: {
-        projectId: selectedProject.id,
-        taskId
-      }
-    });
+     setTasks(tasks.filter(t => t.id !== taskId));
+  };
+
+  const toggleTask = (taskToToggle: Task) => {
+     setTasks(tasks.map(t => t.id === taskToToggle.id ? {...t, completed: !t.completed} : t));
   };
 
   const handleDelete = () => {
@@ -208,29 +183,24 @@ export default function ProjectModal() {
       dispatch({ type: 'CLOSE_MODALS' });
     }
   };
-
-  const toggleTask = (task: Task) => {
-    if (!selectedProject) return;
-    
-    dispatch({
-      type: 'UPDATE_TASK',
-      payload: {
-        projectId: selectedProject.id,
-        task: { ...task, completed: !task.completed }
-      }
-    });
+  
+    const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   if (!showProjectModal) return null;
 
-  const colorOptions = [
-    '#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#6B7280'
-  ];
+  const colorOptions = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#6B7280'];
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
+          {/* ... (Modalin yläosa ja välilehdet pysyvät samana) ... */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
           <h2 className="text-lg font-semibold text-gray-900">
             {selectedProject ? 'Muokkaa projektia' : 'Luo projekti'}
           </h2>
@@ -267,12 +237,13 @@ export default function ProjectModal() {
             Tiedostot ({files.length})
           </button>
         </div>
-
-        <div className="flex-1 overflow-y-auto">
-          {activeTab === 'details' ? (
-            <div>
-              <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                <div>
+        
+          <div className="flex-1 overflow-y-auto">
+              {activeTab === 'details' ? (
+                  <div>
+                      <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                          {/* ... (Projektin perustietojen kentät pysyvät samana) ... */}
+                           <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <BookOpen className="w-4 h-4 inline mr-2" />
                     Projektin nimi
@@ -363,52 +334,52 @@ export default function ProjectModal() {
                     />
                   </div>
                 </div>
+                          <div className="flex justify-between pt-4">
+                              {selectedProject && (
+                                  <button
+                                      type="button"
+                                      onClick={handleDelete}
+                                      className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                  >
+                                      Poista projekti
+                                  </button>
+                              )}
+                              <div className="flex space-x-3 ml-auto">
+                                  <button
+                                      type="button"
+                                      onClick={() => dispatch({ type: 'CLOSE_MODALS' })}
+                                      className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                  >
+                                      Peruuta
+                                  </button>
+                                  <button
+                                      type="submit"
+                                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                  >
+                                      {selectedProject ? 'Päivitä' : 'Luo'}
+                                  </button>
+                              </div>
+                          </div>
+                      </form>
 
-                <div className="flex justify-between pt-4">
-                  {selectedProject && (
-                    <button
-                      type="button"
-                      onClick={handleDelete}
-                      className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                    >
-                      Poista projekti
-                    </button>
-                  )}
-                  <div className="flex space-x-3 ml-auto">
-                    <button
-                      type="button"
-                      onClick={() => dispatch({ type: 'CLOSE_MODALS' })}
-                      className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                    >
-                      Peruuta
-                    </button>
-                    <button
-                      type="submit"
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                    >
-                      {selectedProject ? 'Päivitä' : 'Luo'}
-                    </button>
-                  </div>
-                </div>
-              </form>
-
-              {/* Tasks Section for Existing Project */}
-              {selectedProject && (
-                <div className="border-t border-gray-200 p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-medium text-gray-900">Tehtävät</h3>
-                    <button
-                      onClick={() => setShowAddTask(!showAddTask)}
-                      className="flex items-center px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
-                    >
-                      <Plus className="w-4 h-4 mr-1" />
-                      Lisää tehtävä
-                    </button>
-                  </div>
-
-                  {showAddTask && (
-                    <form onSubmit={handleAddTask} className="bg-gray-50 p-4 rounded-lg mb-4 space-y-3">
-                      <input
+                      {/* ========================================================================================== */}
+                      {/* MUUTOS 3: Tehtävät-osio näkyy aina */}
+                      {/* ========================================================================================== */}
+                      <div className="border-t border-gray-200 p-6">
+                          <div className="flex items-center justify-between mb-4">
+                              <h3 className="text-lg font-medium text-gray-900">Tehtävät</h3>
+                              <button
+                                  onClick={() => setShowAddTask(!showAddTask)}
+                                  className="flex items-center px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                              >
+                                  <Plus className="w-4 h-4 mr-1" />
+                                  Lisää tehtävä
+                              </button>
+                          </div>
+                          {showAddTask && (
+                              <form onSubmit={handleAddTask} className="bg-gray-50 p-4 rounded-lg mb-4 space-y-3">
+                                  {/* ... (Tehtävän lisäyskentät pysyvät samana) ... */}
+                                   <input
                         type="text"
                         required
                         value={newTask.title}
@@ -455,24 +426,21 @@ export default function ProjectModal() {
                           Peruuta
                         </button>
                       </div>
-                    </form>
-                  )}
-
-                  <div className="space-y-2">
-                    {selectedProject.tasks.map(task => (
-                      <div
-                        key={task.id}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <input
-                            type="checkbox"
-                            checked={task.completed}
-                            onChange={() => toggleTask(task)}
-                            className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                          />
-                          <div>
-                            <div className={`font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
+                              </form>
+                          )}
+                          <div className="space-y-2">
+                              {tasks.map(task => (
+                                  <div key={task.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                      <div className="flex items-center space-x-3">
+                                          <input
+                                              type="checkbox"
+                                              checked={task.completed}
+                                              onChange={() => toggleTask(task)}
+                                              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                          />
+                                          <div>
+                                              {/* ... (Tehtävän tietonäkymä pysyy samana) ... */}
+                                                 <div className={`font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
                               {task.title}
                             </div>
                             {task.description && (
@@ -491,28 +459,26 @@ export default function ProjectModal() {
                                 <span>Määräaika: {new Date(task.dueDate).toLocaleDateString('fi-FI')}</span>
                               )}
                             </div>
+                                          </div>
+                                      </div>
+                                      <button
+                                          onClick={() => handleDeleteTask(task.id)}
+                                          className="text-red-500 hover:text-red-700 transition-colors"
+                                      >
+                                          <Trash2 className="w-4 h-4" />
+                                      </button>
+                                  </div>
+                              ))}
+                              {tasks.length === 0 && (
+                                  <p className="text-gray-500 text-center py-4">Ei tehtäviä vielä</p>
+                              )}
                           </div>
-                        </div>
-                        <button
-                          onClick={() => handleDeleteTask(task.id)}
-                          className="text-red-500 hover:text-red-700 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
                       </div>
-                    ))}
-                    
-                    {selectedProject.tasks.length === 0 && (
-                      <p className="text-gray-500 text-center py-4">Ei tehtäviä vielä</p>
-                    )}
                   </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="p-6 space-y-6">
-              {/* File Upload Section */}
-              <div>
+              ) : (
+                  <div className="p-6 space-y-6">
+                      {/* ... (Tiedostot-välilehti pysyy samana) ... */}
+                       <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Liitetiedostot</h3>
                 
                 {/* Upload Area */}
@@ -642,25 +608,22 @@ export default function ProjectModal() {
                   </div>
                 </div>
               )}
-
               {files.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   <File className="w-12 h-12 mx-auto mb-2 text-gray-300" />
                   <p>Ei liitettyjä tiedostoja</p>
                 </div>
               )}
-            </div>
+                  </div>
+              )}
+          </div>
+          {showGoogleDriveBrowser && (
+              <GoogleDriveBrowser
+                  onFilesSelected={handleGoogleDriveFilesSelected}
+                  onClose={() => setShowGoogleDriveBrowser(false)}
+              />
           )}
-        </div>
       </div>
-
-      {/* Google Drive Browser Modal */}
-      {showGoogleDriveBrowser && (
-        <GoogleDriveBrowser
-          onFilesSelected={handleGoogleDriveFilesSelected}
-          onClose={() => setShowGoogleDriveBrowser(false)}
-        />
-      )}
-    </div>
+      </div>
   );
 }
