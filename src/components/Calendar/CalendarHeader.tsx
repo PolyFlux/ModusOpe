@@ -21,7 +21,7 @@ export default function CalendarHeader() {
     dispatch({ type: 'SET_SELECTED_DATE', payload: new Date() });
   };
 
-  const showNavigation = currentView !== 'schedule';
+  const showNavigation = currentView !== 'schedule' && currentView !== 'day';
 
   return (
     <div className="flex items-center justify-between mb-6">
