@@ -40,10 +40,12 @@ interface AppState {
   selectedDate: Date;
   showEventModal: boolean;
   showProjectModal: boolean;
+  showCourseModal: boolean;
   showScheduleTemplateModal: boolean;
   showRecurringClassModal: boolean;
   selectedEvent?: Event;
   selectedProjectId?: string;
+  courseModalInfo?: { id?: string };
   selectedScheduleTemplate?: ScheduleTemplate;
   selectedRecurringClass?: RecurringClass;
 }
@@ -68,6 +70,7 @@ type AppAction =
   | { type: 'SET_SELECTED_DATE'; payload: Date }
   | { type: 'TOGGLE_EVENT_MODAL'; payload?: Event }
   | { type: 'TOGGLE_PROJECT_MODAL'; payload?: string }
+  | { type: 'TOGGLE_COURSE_MODAL'; payload?: { id?: string } }
   | { type: 'TOGGLE_SCHEDULE_TEMPLATE_MODAL'; payload?: ScheduleTemplate }
   | { type: 'TOGGLE_RECURRING_CLASS_MODAL'; payload?: RecurringClass }
   | { type: 'CLOSE_MODALS' };
@@ -85,6 +88,7 @@ const initialState: AppState = {
   selectedDate: new Date(),
   showEventModal: false,
   showProjectModal: false,
+  showCourseModal: false,
   showScheduleTemplateModal: false,
   showRecurringClassModal: false
 };
@@ -222,6 +226,9 @@ function appReducer(state: AppState, action: AppAction): AppState {
     
     case 'TOGGLE_PROJECT_MODAL':
       return { ...state, showProjectModal: !state.showProjectModal, selectedProjectId: action.payload };
+
+      case 'TOGGLE_COURSE_MODAL':
+      return { ...state, showCourseModal: !state.showCourseModal, courseModalInfo: action.payload };
     
     case 'TOGGLE_SCHEDULE_TEMPLATE_MODAL':
       return { ...state, showScheduleTemplateModal: !state.showScheduleTemplateModal, selectedScheduleTemplate: action.payload };
@@ -234,10 +241,12 @@ function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         showEventModal: false,
         showProjectModal: false,
+        showCourseModal: false,
         showScheduleTemplateModal: false,
         showRecurringClassModal: false,
         selectedEvent: undefined,
         selectedProjectId: undefined,
+        courseModalInfo: undefined,
         selectedScheduleTemplate: undefined,
         selectedRecurringClass: undefined
       };
