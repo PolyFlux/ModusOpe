@@ -11,8 +11,8 @@ export default function CourseList() {
   const courses = state.projects.filter(p => p.type === 'course');
 
   const handleCourseClick = (courseId: string) => {
-    dispatch({ type: 'TOGGLE_PROJECT_MODAL', payload: courseId });
-  };
+    dispatch({ type: 'TOGGLE_COURSE_MODAL', payload: { id: courseId } });
+};
 
   const getTaskStats = (courseId: string) => {
     const course = courses.find(p => p.id === courseId);
@@ -32,7 +32,7 @@ export default function CourseList() {
           <p className="text-gray-600 mt-2">Hallinnoi kurssejasi ja oppimiskokonaisuuksiasi</p>
         </div>
         <button
-          onClick={() => dispatch({ type: 'TOGGLE_PROJECT_MODAL' })}
+          onClick={() => dispatch({ type: 'TOGGLE_COURSE_MODAL' })}
           className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-4 h-4 mr-2" />
