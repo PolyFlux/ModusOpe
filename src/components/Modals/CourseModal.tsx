@@ -199,3 +199,6 @@ export default function CourseModal() {
                         >
                           {selectedCourse ? 'Päivitä kurssi' : 'Luo kurssi'}
                         </button>
+    </div>
+    </div>
+</form>
