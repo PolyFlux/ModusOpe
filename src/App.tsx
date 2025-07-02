@@ -8,6 +8,7 @@ import CourseList from './components/Courses/CourseList';
 import TaskList from './components/Tasks/TaskList';
 import EventModal from './components/Modals/EventModal';
 import ProjectModal from './components/Modals/ProjectModal';
+import CourseModal from './components/Modals/CourseModal';
 import ScheduleTemplateModal from './components/Modals/ScheduleTemplateModal';
 import RecurringClassModal from './components/Modals/RecurringClassModal';
 
@@ -42,6 +43,7 @@ function App() {
         </main>
         <EventModal />
         <ProjectModal />
+        <CourseModal />
         <ScheduleTemplateModal />
         <RecurringClassModal />
       </div>
