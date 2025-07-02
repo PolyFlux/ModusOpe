@@ -68,6 +68,7 @@ export interface RecurringClass {
   endDate: Date;
   color: string;
   groupName?: string; // For grouping multiple recurring classes
+  projectId?: string;
   files?: Array<{
     id: string;
     name: string;
