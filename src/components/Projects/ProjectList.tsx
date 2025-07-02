@@ -5,7 +5,7 @@ import { formatDate } from '../../utils/dateUtils';
 
 export default function ProjectList() {
   const { state, dispatch } = useApp();
-  const { projects } = state;
+  const projects = state.projects.filter(p => p.type !== 'course');
 
   const handleProjectClick = (projectId: string) => {
     dispatch({ type: 'TOGGLE_PROJECT_MODAL', payload: projectId });
