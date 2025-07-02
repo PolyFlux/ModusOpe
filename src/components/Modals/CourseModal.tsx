@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { X, BookOpen, FileText, Calendar } from 'lucide-react';
+import { X, BookOpen, FileText, Calendar, Clock } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 import { Project } from '../../types';
 
 export default function CourseModal() {
   const { state, dispatch } = useApp();
-  const { showCourseModal, courseModalInfo, projects } = state;
+  const { showCourseModal, courseModalInfo, projects, recurringClasses, scheduleTemplates } = state;
 
   const selectedCourse = courseModalInfo?.id
     ? projects.find(p => p.id === courseModalInfo.id && p.type === 'course')
@@ -168,6 +168,55 @@ export default function CourseModal() {
                     />
                   </div>
                 </div>
+
+                      {/* ===== OPPITUNNIT-OSIO ALKAA ===== */}
+<div className="border-t border-gray-200 pt-4 mt-4">
+    <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-medium text-gray-900">Oppitunnit</h3>
+        <button
+            type="button"
+            onClick={() => dispatch({ type: 'TOGGLE_RECURRING_CLASS_MODAL' })}
+            className="flex items-center px-3 py-1 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            // Nappi toimii vain, kun kurssi on jo tallennettu kerran (eli sitä muokataan)
+            disabled={!selectedCourse}
+        >
+            <Clock className="w-4 h-4 mr-1" />
+            Lisää oppitunti
+        </button>
+    </div>
+
+    {selectedCourse ? (
+        <div className="space-y-2">
+            {recurringClasses
+                .filter(rc => rc.projectId === selectedCourse.id)
+                .map(lesson => {
+                    const template = scheduleTemplates.find(t => t.id === lesson.scheduleTemplateId);
+                    const weekDays = ['Ma', 'Ti', 'Ke', 'To', 'Pe'];
+                    return (
+                        <div key={lesson.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center space-x-3">
+                                <Clock className="w-4 h-4 text-green-600" />
+                                <div>
+                                    <div className="font-medium text-gray-900">{lesson.title}</div>
+                                    <div className="text-sm text-gray-600">
+                                        {template ? `${weekDays[template.dayOfWeek]} klo ${template.startTime}-${template.endTime}` : 'Tuntematon aika'}
+                                    </div>
+                                </div>
+                            </div>
+                            {/* Tähän voisi lisätä poisto-napin tulevaisuudessa */}
+                        </div>
+                    );
+                })
+            }
+            {recurringClasses.filter(rc => rc.projectId === selectedCourse.id).length === 0 && (
+                 <p className="text-gray-500 text-center py-4">Ei liitettyjä oppitunteja.</p>
+            )}
+        </div>
+    ) : (
+         <p className="text-gray-500 text-center py-4 text-sm">Tallenna kurssi ensin, jotta voit lisätä sille oppitunteja.</p>
+    )}
+</div>
+{/* ===== OPPITUNNIT-OSIO PÄÄTTYY ===== */}
 
                 <div className="flex justify-between pt-4 border-t border-gray-200 mt-6">
                     {selectedCourse && (
