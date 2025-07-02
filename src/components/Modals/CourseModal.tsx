@@ -103,7 +103,7 @@ export default function CourseModal() {
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Esim. Matematiikka 9A"
+                        placeholder="Esim. Matematiikka 9A; FY7"
                     />
                 </div>
 
@@ -158,7 +158,7 @@ export default function CourseModal() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Päättymispäivä (valinnainen)
+                      Päättymispäivä
                     </label>
                     <input
                       type="date"
