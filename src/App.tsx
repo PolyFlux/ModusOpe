@@ -4,6 +4,7 @@ import Sidebar from './components/Layout/Sidebar';
 import Dashboard from './components/Dashboard/Dashboard';
 import Calendar from './components/Calendar/Calendar';
 import ProjectList from './components/Projects/ProjectList';
+import CourseList from './components/Courses/CourseList';
 import TaskList from './components/Tasks/TaskList';
 import EventModal from './components/Modals/EventModal';
 import ProjectModal from './components/Modals/ProjectModal';
@@ -19,6 +20,8 @@ function App() {
         return <Dashboard />;
       case 'calendar':
         return <Calendar />;
+        case 'courses':
+        return <CourseList />;
       case 'projects':
         return <ProjectList />;
       case 'tasks':
