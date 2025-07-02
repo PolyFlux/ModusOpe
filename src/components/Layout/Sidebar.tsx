@@ -13,6 +13,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   const menuItems = [
     { id: 'dashboard', label: 'Kojelauta', icon: Home },
     { id: 'calendar', label: 'Kalenteri', icon: Calendar },
+    { id: 'courses', label: 'Kurssit', icon: BookOpen },
     { id: 'projects', label: 'Projektit', icon: BookOpen },
     { id: 'tasks', label: 'Tehtävät', icon: CheckSquare }
   ];
