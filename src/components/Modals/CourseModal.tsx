@@ -51,11 +51,11 @@ const courseData: any = { // Käytetään 'any' väliaikaisesti, koska lisäämm
     description: formData.description,
     type: 'course',
     color: formData.color,
-    startDate: new Date(formData.startDate),
-    endDate: formData.endDate ? new Date(formData.endDate) : undefined,
+    startDate: new Date(formData.startDate + 'T00:00:00'),
+    endDate: formData.endDate ? new Date(formData.endDate + 'T00:00:00') : undefined,
     tasks: selectedCourse?.tasks || [],
     files: selectedCourse?.files || [],
-    templateGroupName: formData.templateGroupName // LISÄÄ TÄMÄ
+    templateGroupName: formData.templateGroupName
 };
 
     if (selectedCourse) {
