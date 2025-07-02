@@ -5,7 +5,7 @@ import { Project } from '../../types';
 
 export default function CourseModal() {
   const { state, dispatch } = useApp();
-  const { showCourseModal, courseModalInfo, projects, recurringClasses, scheduleTemplates } = state;
+  const { showCourseModal, courseModalInfo, projects, scheduleTemplates } = state;
 
   const selectedCourse = courseModalInfo?.id
     ? projects.find(p => p.id === courseModalInfo.id && p.type === 'course')
@@ -16,8 +16,9 @@ export default function CourseModal() {
     description: '',
     color: '#3B82F6',
     startDate: '',
-    endDate: ''
-  });
+    endDate: '',
+    templateGroupName: ''
+});
 
   useEffect(() => {
     if (selectedCourse) {
@@ -34,7 +35,8 @@ export default function CourseModal() {
         description: '',
         color: '#3B82F6',
         startDate: new Date().toISOString().split('T')[0],
-        endDate: ''
+        endDate: '',
+        templateGroupName: ''
       });
     }
   }, [selectedCourse, showCourseModal]);
@@ -43,17 +45,18 @@ export default function CourseModal() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const courseData: Project = {
-      id: selectedCourse?.id || Date.now().toString(),
-      name: formData.name,
-      description: formData.description,
-      type: 'course',
-      color: formData.color,
-      startDate: new Date(formData.startDate),
-      endDate: formData.endDate ? new Date(formData.endDate) : undefined,
-      tasks: selectedCourse?.tasks || [],
-      files: selectedCourse?.files || []
-    };
+const courseData: any = { // Käytetään 'any' väliaikaisesti, koska lisäämme custom-kentän
+    id: selectedCourse?.id || Date.now().toString(),
+    name: formData.name,
+    description: formData.description,
+    type: 'course',
+    color: formData.color,
+    startDate: new Date(formData.startDate),
+    endDate: formData.endDate ? new Date(formData.endDate) : undefined,
+    tasks: selectedCourse?.tasks || [],
+    files: selectedCourse?.files || [],
+    templateGroupName: formData.templateGroupName // LISÄÄ TÄMÄ
+};
 
     if (selectedCourse) {
       dispatch({ type: 'UPDATE_PROJECT', payload: courseData });
@@ -107,6 +110,39 @@ export default function CourseModal() {
                     />
                 </div>
 
+{/* ===== TUNTIRYHMÄN VALINTA ALKAA ===== */}
+{!selectedCourse && (
+    <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+            <Clock className="w-4 h-4 inline mr-2" />
+            Valitse tuntiryhmä (luo oppitunnit automaattisesti)
+        </label>
+        <select
+            value={formData.templateGroupName}
+            onChange={(e) => {
+                const groupName = e.target.value;
+                // Täytetään kurssin nimi automaattisesti, jos se on tyhjä
+                setFormData({ 
+                    ...formData, 
+                    templateGroupName: groupName,
+                    name: formData.name || groupName
+                });
+            }}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+            <option value="">Ei valintaa (luo tyhjä kurssi)</option>
+            {/* Luodaan uniikit ryhmänimet */}
+            {[...new Set(scheduleTemplates.map(t => t.name))].map(groupName => (
+                <option key={groupName} value={groupName}>
+                    {groupName}
+                </option>
+            ))}
+        </select>
+        <p className="text-xs text-gray-500 mt-1">Valitsemalla tuntiryhmän luot kurssille oppitunnit automaattisesti kiertotuntikaavion pohjalta.</p>
+    </div>
+)}
+{/* ===== TUNTIRYHMÄN VALINTA PÄÄTTYY ===== */}
+                
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         <FileText className="w-4 h-4 inline mr-2" />
