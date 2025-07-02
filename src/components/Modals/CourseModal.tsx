@@ -75,7 +75,7 @@ export default function CourseModal() {
     }
   };
 
-  // Älä näytä modaalia, jos ei ole aktiivinen
+ // Älä näytä modaalia, jos ei ole aktiivinen
   if (!showCourseModal) return null;
 
   const colorOptions = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#6B7280'];
@@ -192,13 +192,16 @@ export default function CourseModal() {
                         >
                             Peruuta
                         </button>
-                        
                         <button
                             type="submit"
                             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
-                          {selectedCourse ? 'Päivitä kurssi' : 'Luo kurssi'}
+                            {selectedCourse ? 'Päivitä kurssi' : 'Luo kurssi'}
                         </button>
+                    </div>
+                </div>
+              </form>
+          </div>
+      </div>
     </div>
-    </div>
-</form>
+  );
