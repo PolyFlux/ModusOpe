@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { X, BookOpen, FileText, Calendar, Plus, Trash2 } from 'lucide-react';
+import { X, BookOpen, FileText, Calendar } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
-import { Project } from '../../types'; // Huom: Kurssi on datamallissa erikoistyyppi 'Project'-oliosta. Tämä on oikein.
+import { Project } from '../../types';
 
 export default function CourseModal() {
   const { state, dispatch } = useApp();
-  // Käytetään uutta courseModalInfo-tilaa
   const { showCourseModal, courseModalInfo, projects } = state;
 
-  // Haetaan muokattava kurssi ID:n perusteella
   const selectedCourse = courseModalInfo?.id
     ? projects.find(p => p.id === courseModalInfo.id && p.type === 'course')
     : null;
@@ -23,7 +21,6 @@ export default function CourseModal() {
 
   useEffect(() => {
     if (selectedCourse) {
-      // Asetetaan olemassa olevan kurssin tiedot
       setFormData({
         name: selectedCourse.name,
         description: selectedCourse.description || '',
@@ -32,7 +29,6 @@ export default function CourseModal() {
         endDate: selectedCourse.endDate?.toISOString().split('T')[0] || ''
       });
     } else {
-      // Nollataan kentät uutta kurssia varten
       setFormData({
         name: '',
         description: '',
@@ -51,12 +47,12 @@ export default function CourseModal() {
       id: selectedCourse?.id || Date.now().toString(),
       name: formData.name,
       description: formData.description,
-      type: 'course', // Tyyppi on aina 'course'
+      type: 'course',
       color: formData.color,
       startDate: new Date(formData.startDate),
       endDate: formData.endDate ? new Date(formData.endDate) : undefined,
-      tasks: selectedCourse?.tasks || [], // Säilytetään olemassa olevat tehtävät
-      files: selectedCourse?.files || [] // Säilytetään olemassa olevat tiedostot
+      tasks: selectedCourse?.tasks || [],
+      files: selectedCourse?.files || []
     };
 
     if (selectedCourse) {
@@ -75,7 +71,6 @@ export default function CourseModal() {
     }
   };
 
- // Älä näytä modaalia, jos ei ole aktiivinen
   if (!showCourseModal) return null;
 
   const colorOptions = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#6B7280'];
@@ -205,3 +200,4 @@ export default function CourseModal() {
       </div>
     </div>
   );
+}
