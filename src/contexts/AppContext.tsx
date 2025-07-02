@@ -142,45 +142,59 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, events: state.events.filter(event => event.id !== action.payload) };
 
     case 'ADD_PROJECT': {
-  const newProject = action.payload as any; // Käytetään 'any' väliaikaisesti
-  const templateGroupName = newProject.templateGroupName;
-  delete newProject.templateGroupName; // Poistetaan ylimääräinen kenttä
+      const newProjectData = action.payload as any;
+      const templateGroupName = newProjectData.templateGroupName;
+      delete newProjectData.templateGroupName;
 
-  const newProjects = [...state.projects, newProject];
+      const newProject: Project = {
+          ...newProjectData,
+          // Varmistetaan, että tehtävät ja tiedostot ovat taulukoita
+          tasks: newProjectData.tasks || [], 
+          files: newProjectData.files || []
+      };
+      
+      const newProjects = [...state.projects, newProject];
 
-  let newRecurringClasses = [...state.recurringClasses];
-  let newEvents = [...state.events];
+      let newRecurringClasses = [...state.recurringClasses];
+      let newEvents = [...state.events];
 
-  // Jos templateGroupName on annettu, luodaan oppitunnit
-  if (templateGroupName) {
-    const templatesInGroup = state.scheduleTemplates.filter(t => t.name === templateGroupName);
+      // Jos tuntiryhmä on valittu, luodaan oppitunnit
+      if (templateGroupName) {
+        const templatesInGroup = state.scheduleTemplates.filter(t => t.name === templateGroupName);
+        
+        // **KORJATTU KOHTA ALKAA**
+        // Jos kurssilla ei ole päättymispäivää, käytetään oletuksena vuoden loppua.
+        const recurringEndDate = newProject.endDate 
+            ? newProject.endDate 
+            : new Date(newProject.startDate.getFullYear(), 11, 31);
+        // **KORJATTU KOHTA PÄÄTTYY**
 
-    templatesInGroup.forEach(template => {
-        const recurringClass: RecurringClass = {
-            id: `${newProject.id}-${template.id}`,
-            title: newProject.name, // Käytetään kurssin nimeä
-            scheduleTemplateId: template.id,
-            startDate: newProject.startDate,
-            endDate: newProject.endDate,
-            color: newProject.color,
-            groupName: template.name,
-            projectId: newProject.id
-        };
-        newRecurringClasses.push(recurringClass);
-        newEvents.push(...generateRecurringEvents(recurringClass, template));
-    });
-  }
+        templatesInGroup.forEach(template => {
+            const recurringClass: RecurringClass = {
+                id: `${newProject.id}-${template.id}`,
+                title: newProject.name,
+                scheduleTemplateId: template.id,
+                startDate: newProject.startDate,
+                endDate: recurringEndDate, // Käytetään korjattua päättymispäivää
+                color: newProject.color,
+                groupName: template.name,
+                projectId: newProject.id
+            };
+            newRecurringClasses.push(recurringClass);
+            newEvents.push(...generateRecurringEvents(recurringClass, template));
+        });
+      }
 
-  // Päivitetään kaikki kerralla
-  const finalEvents = updateAllEvents({ ...state, events: newEvents }, newProjects);
-
-  return { 
-    ...state, 
-    projects: newProjects, 
-    recurringClasses: newRecurringClasses,
-    events: finalEvents
-  };
-}
+      // Päivitetään kaikki tilat kerralla
+      const finalEvents = updateAllEvents({ ...state, events: newEvents }, newProjects);
+      
+      return { 
+        ...state, 
+        projects: newProjects, 
+        recurringClasses: newRecurringClasses,
+        events: finalEvents
+      };
+    }
     case 'UPDATE_PROJECT': {
       const newProjects = state.projects.map(p => p.id === action.payload.id ? action.payload : p);
       return { ...state, projects: newProjects, events: updateAllEvents(state, newProjects) };
