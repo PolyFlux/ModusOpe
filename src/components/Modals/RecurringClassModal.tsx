@@ -6,7 +6,7 @@ import GoogleDriveBrowser from '../GoogleDrive/GoogleDriveBrowser';
 
 export default function RecurringClassModal() {
   const { state, dispatch } = useApp();
-  const { showRecurringClassModal, selectedRecurringClass, scheduleTemplates } = state;
+  const { showRecurringClassModal, selectedRecurringClass, scheduleTemplates, courseModalInfo } = state;
 
   const [activeTab, setActiveTab] = useState<'details' | 'files'>('details');
   const [formData, setFormData] = useState({
@@ -156,6 +156,7 @@ export default function RecurringClassModal() {
         endDate: new Date(formData.endDate),
         color: template.color,
         groupName: formData.templateGroupName,
+        projectId: courseModalInfo?.id,
         files: files
       };
 
