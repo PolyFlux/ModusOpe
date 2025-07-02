@@ -142,32 +142,27 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, events: state.events.filter(event => event.id !== action.payload) };
 
     case 'ADD_PROJECT': {
-      const newProjectData = action.payload as any;
-      const templateGroupName = newProjectData.templateGroupName;
-      delete newProjectData.templateGroupName;
-
-      const newProject: Project = {
-          ...newProjectData,
-          // Varmistetaan, että tehtävät ja tiedostot ovat taulukoita
-          tasks: newProjectData.tasks || [], 
-          files: newProjectData.files || []
-      };
+      // Määritellään tyyppi, joka sisältää väliaikaisen kentän
+      type AddProjectPayload = Project & { templateGroupName?: string };
+      const payload = action.payload as AddProjectPayload;
       
+      // Erotellaan tuntiryhmän nimi varsinaisesta projektidatasta
+      const { templateGroupName, ...projectData } = payload;
+      const newProject: Project = projectData;
+
       const newProjects = [...state.projects, newProject];
-
+      
       let newRecurringClasses = [...state.recurringClasses];
-      let newEvents = [...state.events];
+      let eventsWithNewRecurring = [...state.events];
 
-      // Jos tuntiryhmä on valittu, luodaan oppitunnit
-      if (templateGroupName) {
+      // Jos käyttäjä valitsi tuntiryhmän, luodaan oppitunnit
+      if (templateGroupName && newProject.startDate) {
         const templatesInGroup = state.scheduleTemplates.filter(t => t.name === templateGroupName);
         
-        // **KORJATTU KOHTA ALKAA**
-        // Jos kurssilla ei ole päättymispäivää, käytetään oletuksena vuoden loppua.
+        // Jos päättymispäivää ei ole, käytetään oletuksena vuoden loppua
         const recurringEndDate = newProject.endDate 
             ? newProject.endDate 
             : new Date(newProject.startDate.getFullYear(), 11, 31);
-        // **KORJATTU KOHTA PÄÄTTYY**
 
         templatesInGroup.forEach(template => {
             const recurringClass: RecurringClass = {
@@ -175,18 +170,19 @@ function appReducer(state: AppState, action: AppAction): AppState {
                 title: newProject.name,
                 scheduleTemplateId: template.id,
                 startDate: newProject.startDate,
-                endDate: recurringEndDate, // Käytetään korjattua päättymispäivää
+                endDate: recurringEndDate,
                 color: newProject.color,
                 groupName: template.name,
                 projectId: newProject.id
             };
             newRecurringClasses.push(recurringClass);
-            newEvents.push(...generateRecurringEvents(recurringClass, template));
+            // Lisätään luodut tapahtumat suoraan listaan
+            eventsWithNewRecurring.push(...generateRecurringEvents(recurringClass, template));
         });
       }
 
-      // Päivitetään kaikki tilat kerralla
-      const finalEvents = updateAllEvents({ ...state, events: newEvents }, newProjects);
+      // Lopuksi päivitetään deadline-tapahtumat ja palautetaan uusi tila
+      const finalEvents = updateAllEvents({ ...state, events: eventsWithNewRecurring }, newProjects);
       
       return { 
         ...state, 
