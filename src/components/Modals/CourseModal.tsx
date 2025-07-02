@@ -1,15 +1,16 @@
-// src/components/Modals/CourseModal.tsx
 import React, { useState, useEffect } from 'react';
-import { X, BookOpen, FileText, Calendar, Plus, Trash2, Clock } from 'lucide-react';
+import { X, BookOpen, FileText, Calendar, Plus, Trash2 } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
-import { Project, Task } from '../../types';
+import { Project } from '../../types'; // Huom: Kurssi on datamallissa erikoistyyppi 'Project'-oliosta. Tämä on oikein.
 
 export default function CourseModal() {
   const { state, dispatch } = useApp();
-  const { showCourseModal, courseModalInfo, projects, recurringClasses, scheduleTemplates } = state;
+  // Käytetään uutta courseModalInfo-tilaa
+  const { showCourseModal, courseModalInfo, projects } = state;
 
+  // Haetaan muokattava kurssi ID:n perusteella
   const selectedCourse = courseModalInfo?.id
-    ? projects.find(p => p.id === courseModalInfo.id)
+    ? projects.find(p => p.id === courseModalInfo.id && p.type === 'course')
     : null;
 
   const [formData, setFormData] = useState({
@@ -22,6 +23,7 @@ export default function CourseModal() {
 
   useEffect(() => {
     if (selectedCourse) {
+      // Asetetaan olemassa olevan kurssin tiedot
       setFormData({
         name: selectedCourse.name,
         description: selectedCourse.description || '',
@@ -30,7 +32,7 @@ export default function CourseModal() {
         endDate: selectedCourse.endDate?.toISOString().split('T')[0] || ''
       });
     } else {
-      // Reset for new course
+      // Nollataan kentät uutta kurssia varten
       setFormData({
         name: '',
         description: '',
@@ -49,12 +51,12 @@ export default function CourseModal() {
       id: selectedCourse?.id || Date.now().toString(),
       name: formData.name,
       description: formData.description,
-      type: 'course', // Aina tyyppi 'course'
+      type: 'course', // Tyyppi on aina 'course'
       color: formData.color,
       startDate: new Date(formData.startDate),
       endDate: formData.endDate ? new Date(formData.endDate) : undefined,
-      tasks: selectedCourse?.tasks || [],
-      files: selectedCourse?.files || []
+      tasks: selectedCourse?.tasks || [], // Säilytetään olemassa olevat tehtävät
+      files: selectedCourse?.files || [] // Säilytetään olemassa olevat tiedostot
     };
 
     if (selectedCourse) {
@@ -73,6 +75,7 @@ export default function CourseModal() {
     }
   };
 
+  // Älä näytä modaalia, jos ei ole aktiivinen
   if (!showCourseModal) return null;
 
   const colorOptions = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#6B7280'];
@@ -105,7 +108,7 @@ export default function CourseModal() {
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Kurssin nimi"
+                        placeholder="Esim. Matematiikka 9A"
                     />
                 </div>
 
@@ -119,11 +122,11 @@ export default function CourseModal() {
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         rows={3}
-                        placeholder="Kurssin kuvaus"
+                        placeholder="Tarkemmat tiedot kurssista"
                     />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Väri
@@ -135,7 +138,7 @@ export default function CourseModal() {
                           type="button"
                           onClick={() => setFormData({ ...formData, color })}
                           className={`w-8 h-8 rounded-full border-2 transition-all ${
-                            formData.color === color ? 'border-gray-400 scale-110' : 'border-gray-200'
+                            formData.color === color ? 'border-gray-800 ring-2 ring-gray-300' : 'border-gray-200 hover:border-gray-400'
                           }`}
                           style={{ backgroundColor: color }}
                         />
@@ -171,8 +174,6 @@ export default function CourseModal() {
                   </div>
                 </div>
 
-                {/* Oppitunnit-osio tulee tähän myöhemmin */}
-
                 <div className="flex justify-between pt-4 border-t border-gray-200 mt-6">
                     {selectedCourse && (
                         <button
@@ -195,13 +196,4 @@ export default function CourseModal() {
                             type="submit"
                             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
-                            {selectedCourse ? 'Päivitä kurssi' : 'Luo kurssi'}
-                        </button>
-                    </div>
-                </div>
-              </form>
-            </div>
-        </div>
-    </div>
-  );
-}
+                            {selectedCourse ? 'Päivitä kurssi' :
