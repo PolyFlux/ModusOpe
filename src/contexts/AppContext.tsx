@@ -43,11 +43,13 @@ interface AppState {
   showCourseModal: boolean;
   showScheduleTemplateModal: boolean;
   showRecurringClassModal: boolean;
+  showTaskModal: boolean;
   selectedEvent?: Event;
   selectedProjectId?: string;
   courseModalInfo?: { id?: string };
   selectedScheduleTemplate?: ScheduleTemplate;
   selectedRecurringClass?: RecurringClass;
+  selectedTask?: Task;
 }
 
 type AppAction =
@@ -73,6 +75,7 @@ type AppAction =
   | { type: 'TOGGLE_COURSE_MODAL'; payload?: { id?: string } }
   | { type: 'TOGGLE_SCHEDULE_TEMPLATE_MODAL'; payload?: ScheduleTemplate }
   | { type: 'TOGGLE_RECURRING_CLASS_MODAL'; payload?: RecurringClass }
+  | { type: 'TOGGLE_TASK_MODAL'; payload?: Task }
   | { type: 'CLOSE_MODALS' };
 
 const initialState: AppState = {
@@ -90,7 +93,8 @@ const initialState: AppState = {
   showProjectModal: false,
   showCourseModal: false,
   showScheduleTemplateModal: false,
-  showRecurringClassModal: false
+  showRecurringClassModal: false,
+  showTaskModal: false,
 };
 
 
@@ -281,7 +285,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
     
     case 'TOGGLE_RECURRING_CLASS_MODAL':
       return { ...state, showRecurringClassModal: !state.showRecurringClassModal, selectedRecurringClass: action.payload };
-    
+
+    case 'TOGGLE_TASK_MODAL':
+      return { ...state, showTaskModal: !state.showTaskModal, selectedTask: action.payload };
+      
     case 'CLOSE_MODALS':
       return {
         ...state,
@@ -290,11 +297,13 @@ function appReducer(state: AppState, action: AppAction): AppState {
         showCourseModal: false,
         showScheduleTemplateModal: false,
         showRecurringClassModal: false,
+        showTaskModal: false,
         selectedEvent: undefined,
         selectedProjectId: undefined,
         courseModalInfo: undefined,
         selectedScheduleTemplate: undefined,
-        selectedRecurringClass: undefined
+        selectedRecurringClass: undefined,
+        selectedTask: undefined,
       };
     
     default:
