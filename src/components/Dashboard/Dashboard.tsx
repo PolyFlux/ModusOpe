@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
-import { Calendar, Clock, CheckSquare, AlertCircle } from 'lucide-react';
+import { Calendar, Clock, CheckSquare, ClipboardCheck, AlertCircle } from 'lucide-react';
 import { formatDate, isToday, addDays } from '../../utils/dateUtils';
 
 export default function Dashboard() {
@@ -54,7 +54,7 @@ export default function Dashboard() {
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Today's Events</p>
+              <p className="text-sm font-medium text-gray-600">Tämänpäiväiset tapahtumat</p>
               <p className="text-3xl font-bold text-gray-900">{todayEvents.length}</p>
             </div>
             <div className="p-3 bg-blue-100 rounded-lg">
@@ -66,11 +66,11 @@ export default function Dashboard() {
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Active Projects</p>
+              <p className="text-sm font-medium text-gray-600">Aktiiviset projektit</p>
               <p className="text-3xl font-bold text-gray-900">{projects.length}</p>
             </div>
             <div className="p-3 bg-green-100 rounded-lg">
-              <CheckSquare className="w-6 h-6 text-green-600" />
+              <ClipboardCheck className="w-6 h-6 text-green-600" />
             </div>
           </div>
         </div>
@@ -78,7 +78,7 @@ export default function Dashboard() {
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Urgent Tasks</p>
+              <p className="text-sm font-medium text-gray-600">Kiireelliset tehtävät</p>
               <p className="text-3xl font-bold text-gray-900">{urgentTasks.length}</p>
             </div>
             <div className="p-3 bg-red-100 rounded-lg">
@@ -90,7 +90,7 @@ export default function Dashboard() {
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Completion Rate</p>
+              <p className="text-sm font-medium text-gray-600">Valmiina</p>
               <p className="text-3xl font-bold text-gray-900">{Math.round(completionRate)}%</p>
             </div>
             <div className="p-3 bg-purple-100 rounded-lg">
@@ -104,7 +104,7 @@ export default function Dashboard() {
         {/* Upcoming Events */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Upcoming Events</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Tulevat tapahtumat</h2>
             <p className="text-sm text-gray-600">Next 7 days</p>
           </div>
           <div className="p-6">
@@ -131,7 +131,7 @@ export default function Dashboard() {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-8">No upcoming events</p>
+              <p className="text-gray-500 text-center py-8">Ei tulevia tapahtumia</p>
             )}
           </div>
         </div>
@@ -139,8 +139,8 @@ export default function Dashboard() {
         {/* Urgent Tasks */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Urgent Tasks</h2>
-            <p className="text-sm text-gray-600">Due within 7 days</p>
+            <h2 className="text-lg font-semibold text-gray-900">Kiireelliset tapahtumat</h2>
+            <p className="text-sm text-gray-600">Määräaika viikon sisällä</p>
           </div>
           <div className="p-6">
             {urgentTasks.length > 0 ? (
@@ -171,7 +171,7 @@ export default function Dashboard() {
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-center py-8">No urgent tasks</p>
+              <p className="text-gray-500 text-center py-8">Ei kiireellisiä tehtäviä</p>
             )}
           </div>
         </div>
