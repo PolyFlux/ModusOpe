@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, BookOpen, CheckSquare, Plus, Home, Clock } from 'lucide-react';
+import { Calendar, BookOpen, CheckSquare, ClipboardCheck, Plus, Home, Clock } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 
 interface SidebarProps {
@@ -14,7 +14,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
     { id: 'dashboard', label: 'Kojelauta', icon: Home },
     { id: 'calendar', label: 'Kalenteri', icon: Calendar },
     { id: 'courses', label: 'Kurssit', icon: BookOpen },
-    { id: 'projects', label: 'Projektit', icon: BookOpen },
+    { id: 'projects', label: 'Projektit', icon: ClipboardCheck },
     { id: 'tasks', label: 'Tehtävät', icon: CheckSquare }
   ];
 
