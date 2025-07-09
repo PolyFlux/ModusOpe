@@ -56,7 +56,7 @@ export default function ProjectModal() {
       setFormData({
         name: '',
         description: '',
-        type: 'course',
+        type: 'none',
         color: '#3B82F6',
         startDate: new Date().toISOString().split('T')[0],
         endDate: ''
@@ -282,8 +282,8 @@ export default function ProjectModal() {
                       onChange={(e) => setFormData({ ...formData, type: e.target.value as Project['type'] })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
-                      <option value="course">Kurssi</option>
-                      <option value="research">Tutkimus</option>
+                      <option value="none">Ei mitään</option>
+                      // <option value="course">Kurssi</option>
                       <option value="administrative">Hallinnollinen</option>
                       <option value="personal">Henkilökohtainen</option>
                     </select>
