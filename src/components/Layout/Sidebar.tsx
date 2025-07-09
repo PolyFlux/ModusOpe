@@ -58,14 +58,14 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         </button>
         <button
           onClick={() => dispatch({ type: 'TOGGLE_RECURRING_CLASS_MODAL' })}
-          className="w-full flex items-center justify-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors mb-2"
+          className="w-full flex items-center justify-center btn-glossy mb-2"
         >
           <Clock className="w-4 h-4 mr-2" />
           Lisää oppitunti
         </button>
         <button
           onClick={() => dispatch({ type: 'TOGGLE_PROJECT_MODAL' })}
-          className="w-full flex items-center justify-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          className="w-full flex items-center justify-center btn-glossy mb-2"
         >
           <Plus className="w-4 h-4 mr-2" />
           Lisää projekti
