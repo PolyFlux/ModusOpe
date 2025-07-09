@@ -51,7 +51,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
       <div className="p-6 border-t border-gray-200">
         <button
           onClick={() => dispatch({ type: 'TOGGLE_EVENT_MODAL' })}
-          className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors mb-2"
+          className="w-full flex items-center justify-center btn-glossy mb-2"
         >
           <Plus className="w-4 h-4 mr-2" />
           Lisää tapahtuma
