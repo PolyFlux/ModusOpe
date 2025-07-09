@@ -116,13 +116,6 @@ export default function CourseList() {
           <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">Ei kursseja vielä</h3>
           <p className="text-gray-600 mb-4">Luo ensimmäinen kurssisi aloittaaksesi</p>
-          <button
-            onClick={() => dispatch({ type: 'TOGGLE_COURSE_MODAL' })}
-            className="btn-glossy flex items-center"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Luo kurssi
-          </button>
         </div>
       )}
     </div>
