@@ -26,7 +26,7 @@ export default function ProjectList() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Projektit</h1>
-          <p className="text-gray-600 mt-2">Hallinoi projekteja ja tehtäväkokonaisuuksia</p>
+          <p className="text-gray-600 mt-2">Hallinnoi projekteja ja tehtäväkokonaisuuksia</p>
         </div>
         <button
           onClick={() => dispatch({ type: 'TOGGLE_PROJECT_MODAL' })}
