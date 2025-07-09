@@ -11,6 +11,7 @@ import ProjectModal from './components/Modals/ProjectModal';
 import CourseModal from './components/Modals/CourseModal';
 import ScheduleTemplateModal from './components/Modals/ScheduleTemplateModal';
 import RecurringClassModal from './components/Modals/RecurringClassModal';
+import TaskModal from './components/Modals/TaskModal';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -46,6 +47,7 @@ function App() {
         <CourseModal />
         <ScheduleTemplateModal />
         <RecurringClassModal />
+        <TaskModal />
       </div>
     </AppProvider>
   );
