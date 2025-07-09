@@ -53,22 +53,29 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
           onClick={() => dispatch({ type: 'TOGGLE_EVENT_MODAL' })}
           className="w-full flex items-center justify-center btn-glossy mb-2"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Calendar className="w-4 h-4 mr-2" />
           Lisää tapahtuma
         </button>
         <button
           onClick={() => dispatch({ type: 'TOGGLE_RECURRING_CLASS_MODAL' })}
           className="w-full flex items-center justify-center btn-glossy mb-2"
         >
-          <Clock className="w-4 h-4 mr-2" />
+          <BookOpen className="w-4 h-4 mr-2" />
           Lisää oppitunti
         </button>
         <button
           onClick={() => dispatch({ type: 'TOGGLE_PROJECT_MODAL' })}
           className="w-full flex items-center justify-center btn-glossy mb-2"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <ClipboardCheck className="w-4 h-4 mr-2" />
           Lisää projekti
+        </button>
+         <button
+          onClick={() => dispatch({ type: 'TOGGLE_EVENT_MODAL' })}
+          className="w-full flex items-center justify-center btn-glossy mb-2"
+        >
+          <Calendar className="w-4 h-4 mr-2" />
+          Lisää tapahtuma
         </button>
       </div>
     </div>
