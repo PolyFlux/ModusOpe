@@ -3,7 +3,7 @@ import { Event, Project, Task, CalendarView, ScheduleTemplate, RecurringClass } 
 
 function generateProjectDeadlineEvents(projects: Project[]): Event[] {
   return projects
-    .filter(project => project.endDate)
+    .filter(project => project.endDate && project.type !== 'course')
     .map(project => ({
       id: `project-deadline-${project.id}`,
       title: `${project.name}`,
