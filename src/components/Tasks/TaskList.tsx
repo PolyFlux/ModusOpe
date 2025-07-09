@@ -56,7 +56,7 @@ export default function TaskList() {
       </div>
       <button
           onClick={() => dispatch({ type: 'TOGGLE_TASK_MODAL' })}
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="btn-glossy flex items-center"
         >
           <Plus className="w-4 h-4 mr-2" />
           Uusi tehtävä
