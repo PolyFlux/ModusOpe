@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
-import { BookOpen, Calendar, CheckSquare, Plus } from 'lucide-react';
+import { BookOpen, Calendar, CheckSquare, ClipboardCheck, Plus } from 'lucide-react';
 import { formatDate } from '../../utils/dateUtils';
 
 export default function ProjectList() {
@@ -62,7 +62,7 @@ export default function ProjectList() {
                     </span>
                   </div>
                 </div>
-                <BookOpen className="w-5 h-5 text-gray-400" />
+                <ClipboardCheck className="w-5 h-5 text-gray-400" />
               </div>
 
               {project.description && (
@@ -110,7 +110,7 @@ export default function ProjectList() {
 
       {projects.length === 0 && (
         <div className="text-center py-12">
-          <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <ClipboardCheck className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">Ei projekteja tällä hetkellä</h3>
           <p className="text-gray-600 mb-4">Luo uusi projekti aloittaaksesi</p>
         </div>
