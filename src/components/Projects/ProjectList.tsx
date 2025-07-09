@@ -25,15 +25,15 @@ export default function ProjectList() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Projects</h1>
-          <p className="text-gray-600 mt-2">Manage your courses and projects</p>
+          <h1 className="text-3xl font-bold text-gray-900">Projektit</h1>
+          <p className="text-gray-600 mt-2">Hallinoi projekteja ja tehtäväkokonaisuuksia</p>
         </div>
         <button
           onClick={() => dispatch({ type: 'TOGGLE_PROJECT_MODAL' })}
           className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-4 h-4 mr-2" />
-          New Project
+          Uusi projekti
         </button>
       </div>
 
@@ -111,15 +111,8 @@ export default function ProjectList() {
       {projects.length === 0 && (
         <div className="text-center py-12">
           <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No projects yet</h3>
-          <p className="text-gray-600 mb-4">Create your first project to get started</p>
-          <button
-            onClick={() => dispatch({ type: 'TOGGLE_PROJECT_MODAL' })}
-            className="btn-glossy flex items-center"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Create Project
-          </button>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Ei projekteja tällä hetkellä</h3>
+          <p className="text-gray-600 mb-4">Luo uusi projekti aloittaaksesi</p>
         </div>
       )}
     </div>
