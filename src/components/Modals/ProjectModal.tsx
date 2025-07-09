@@ -283,7 +283,7 @@ export default function ProjectModal() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <option value="none">Ei mitään</option>
-                      // <option value="course">Kurssi</option>
+                      <option value="course">Kurssi</option>
                       <option value="administrative">Hallinnollinen</option>
                       <option value="personal">Henkilökohtainen</option>
                     </select>
