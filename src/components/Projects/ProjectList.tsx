@@ -115,7 +115,7 @@ export default function ProjectList() {
           <p className="text-gray-600 mb-4">Create your first project to get started</p>
           <button
             onClick={() => dispatch({ type: 'TOGGLE_PROJECT_MODAL' })}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="btn-glossy flex items-center"
           >
             <Plus className="w-4 h-4 mr-2" />
             Create Project
