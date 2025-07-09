@@ -5,7 +5,7 @@ import { Project } from '../../types';
 
 export default function CourseModal() {
   const { state, dispatch } = useApp();
-  const { showCourseModal, courseModalInfo, projects, scheduleTemplates } = state;
+  const { showCourseModal, courseModalInfo, projects, scheduleTemplates, recurringClasses } = state;
 
   const selectedCourse = courseModalInfo?.id
     ? projects.find(p => p.id === courseModalInfo.id && p.type === 'course')
