@@ -25,7 +25,7 @@ export interface Project {
   name: string;
   description?: string;
   color: string;
-  type: 'course' | 'research' | 'administrative' | 'personal';
+  type: 'none' | 'course' | 'administrative' | 'personal';
   startDate: Date;
   endDate?: Date;
   tasks: Task[];
@@ -37,6 +37,7 @@ export interface Project {
     size?: number;
     uploadDate: Date;
   }>;
+  parentCourseId?: string;
 }
 
 export interface Task {
