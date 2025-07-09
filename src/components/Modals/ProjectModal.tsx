@@ -12,19 +12,20 @@ export default function ProjectModal() {
     ? projects.find(p => p.id === selectedProjectId)
     : null;
 
+  // Haetaan kurssit projekteista pudotusvalikkoa varten
+  const courses = projects.filter(p => p.type === 'course');
+
   const [activeTab, setActiveTab] = useState<'details' | 'files'>('details');
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    type: 'course' as Project['type'],
+    type: 'personal' as Project['type'],
     color: '#3B82F6',
     startDate: '',
-    endDate: ''
+    endDate: '',
+    parentCourseId: '' // Lisätty kenttä
   });
 
-  // ==========================================================================================
-  // MUUTOS 1: Väliaikainen tila uusille tehtäville
-  // ==========================================================================================
   const [tasks, setTasks] = useState<Task[]>([]);
   const [files, setFiles] = useState<any[]>([]);
   const [googleDriveUrl, setGoogleDriveUrl] = useState('');
@@ -47,7 +48,8 @@ export default function ProjectModal() {
         type: selectedProject.type,
         color: selectedProject.color,
         startDate: selectedProject.startDate.toISOString().split('T')[0],
-        endDate: selectedProject.endDate?.toISOString().split('T')[0] || ''
+        endDate: selectedProject.endDate?.toISOString().split('T')[0] || '',
+        parentCourseId: selectedProject.parentCourseId || ''
       });
       setTasks(selectedProject.tasks || []);
       setFiles(selectedProject.files || []);
@@ -56,12 +58,13 @@ export default function ProjectModal() {
       setFormData({
         name: '',
         description: '',
-        type: 'none',
+        type: 'personal',
         color: '#3B82F6',
         startDate: new Date().toISOString().split('T')[0],
-        endDate: ''
+        endDate: '',
+        parentCourseId: ''
       });
-      setTasks([]); // Aloita tyhjällä tehtävälistalla
+      setTasks([]); 
       setFiles([]);
     }
     setShowAddTask(false);
@@ -135,8 +138,9 @@ export default function ProjectModal() {
       color: formData.color,
       startDate: new Date(formData.startDate),
       endDate: formData.endDate ? new Date(formData.endDate) : undefined,
-      tasks: tasks.map(t => ({...t, projectId })), // Varmistetaan projectId
-      files: files
+      tasks: tasks.map(t => ({...t, projectId })),
+      files: files,
+      parentCourseId: formData.parentCourseId || undefined
     };
 
     if (selectedProject) {
@@ -148,9 +152,6 @@ export default function ProjectModal() {
     dispatch({ type: 'CLOSE_MODALS' });
   };
 
-  // ==========================================================================================
-  // MUUTOS 2: Tehtävien käsittely paikallisessa tilassa
-  // ==========================================================================================
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -163,7 +164,7 @@ export default function ProjectModal() {
       dueDate: newTask.dueDate ? new Date(newTask.dueDate) : undefined,
       projectId: selectedProject?.id || 'temp-id'
     };
-    setTasks([...tasks, taskData]); // Lisätään tehtävä paikalliseen tilaan
+    setTasks([...tasks, taskData]);
 
     setNewTask({ title: '', description: '', priority: 'medium', dueDate: '' });
     setShowAddTask(false);
@@ -199,7 +200,6 @@ export default function ProjectModal() {
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
-          {/* ... (Modalin yläosa ja välilehdet pysyvät samana) ... */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
           <h2 className="text-lg font-semibold text-gray-900">
             {selectedProject ? 'Muokkaa projektia' : 'Luo projekti'}
@@ -242,7 +242,6 @@ export default function ProjectModal() {
               {activeTab === 'details' ? (
                   <div>
                       <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                          {/* ... (Projektin perustietojen kentät pysyvät samana) ... */}
                            <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <BookOpen className="w-4 h-4 inline mr-2" />
@@ -257,6 +256,27 @@ export default function ProjectModal() {
                     placeholder="Projektin nimi"
                   />
                 </div>
+
+                {/* ===== UUSI OSA: KURSSIIN LIITTÄMINEN ===== */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <BookOpen className="w-4 h-4 inline mr-2" />
+                    Liitä kurssiin (valinnainen)
+                  </label>
+                  <select
+                    value={formData.parentCourseId}
+                    onChange={(e) => setFormData({ ...formData, parentCourseId: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Ei liitetty kurssiin</option>
+                    {courses.map(course => (
+                      <option key={course.id} value={course.id}>
+                        {course.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {/* ======================================= */}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -282,8 +302,8 @@ export default function ProjectModal() {
                       onChange={(e) => setFormData({ ...formData, type: e.target.value as Project['type'] })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
-                      <option value="none">Ei mitään</option>
                       <option value="course">Kurssi</option>
+                      <option value="research">Tutkimus</option>
                       <option value="administrative">Hallinnollinen</option>
                       <option value="personal">Henkilökohtainen</option>
                     </select>
@@ -361,10 +381,6 @@ export default function ProjectModal() {
                               </div>
                           </div>
                       </form>
-
-                      {/* ========================================================================================== */}
-                      {/* MUUTOS 3: Tehtävät-osio näkyy aina */}
-                      {/* ========================================================================================== */}
                       <div className="border-t border-gray-200 p-6">
                           <div className="flex items-center justify-between mb-4">
                               <h3 className="text-lg font-medium text-gray-900">Tehtävät</h3>
@@ -378,7 +394,6 @@ export default function ProjectModal() {
                           </div>
                           {showAddTask && (
                               <form onSubmit={handleAddTask} className="bg-gray-50 p-4 rounded-lg mb-4 space-y-3">
-                                  {/* ... (Tehtävän lisäyskentät pysyvät samana) ... */}
                                    <input
                         type="text"
                         required
@@ -439,7 +454,6 @@ export default function ProjectModal() {
                                               className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
                                           />
                                           <div>
-                                              {/* ... (Tehtävän tietonäkymä pysyy samana) ... */}
                                                  <div className={`font-medium ${task.completed ? 'line-through text-gray-500' : 'text-gray-900'}`}>
                               {task.title}
                             </div>
@@ -477,11 +491,9 @@ export default function ProjectModal() {
                   </div>
               ) : (
                   <div className="p-6 space-y-6">
-                      {/* ... (Tiedostot-välilehti pysyy samana) ... */}
                        <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Liitetiedostot</h3>
                 
-                {/* Upload Area */}
                 <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                   <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-sm text-gray-600 mb-2">
@@ -503,12 +515,9 @@ export default function ProjectModal() {
                   </label>
                 </div>
               </div>
-
-              {/* Google Drive Section */}
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Google Drive</h3>
                 
-                {/* Google Drive Browser Button */}
                 <div className="mb-4">
                   <button
                     type="button"
@@ -523,7 +532,6 @@ export default function ProjectModal() {
                   </p>
                 </div>
 
-                {/* Manual URL Input */}
                 <div className="border-t border-gray-200 pt-4">
                   <h4 className="text-sm font-medium text-gray-700 mb-2">Tai liitä linkki manuaalisesti:</h4>
                   <div className="flex space-x-2">
@@ -549,7 +557,6 @@ export default function ProjectModal() {
                 </div>
               </div>
 
-              {/* Files List */}
               {files.length > 0 && (
                 <div>
                   <h3 className="text-lg font-medium text-gray-900 mb-4">Liitetyt tiedostot</h3>
