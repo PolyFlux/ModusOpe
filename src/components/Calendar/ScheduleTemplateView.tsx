@@ -27,27 +27,25 @@ export default function ScheduleTemplateView() {
     }
   };
 
-  const getTemplatesForDay = (dayIndex: number): ScheduleTemplate[] => {
-    return scheduleTemplates.filter(template => template.dayOfWeek === dayIndex);
-  };
-
   const getTemplatePosition = (template: ScheduleTemplate) => {
     const [startHour, startMinute] = template.startTime.split(':').map(Number);
     const [endHour, endMinute] = template.endTime.split(':').map(Number);
     
-    const startPosition = ((startHour - 6) * 60) + startMinute; // Minutes from 6:00
+    // Kellonaika alkaa klo 6:00, joten vähennetään se laskuista
+    const startPosition = ((startHour - 6) * 60) + startMinute;
     const duration = ((endHour - startHour) * 60) + (endMinute - startMinute);
+    const hourRowHeight = 48; // 48px per tunti
     
     return {
-      top: (startPosition / 60) * 48, // 48px per hour
-      height: Math.max((duration / 60) * 48, 24) // Minimum 24px height
+      top: (startPosition / 60) * hourRowHeight,
+      height: Math.max((duration / 60) * hourRowHeight, 24)
     };
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-full">
       {/* Header */}
-      <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+      <div className="p-6 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
         <div>
           <h3 className="text-lg font-semibold text-gray-900">Kiertotuntikaavio</h3>
           <p className="text-sm text-gray-600 mt-1">
@@ -63,58 +61,64 @@ export default function ScheduleTemplateView() {
         </button>
       </div>
 
-      {/* Schedule Grid */}
-      <div className="grid grid-cols-6 border-b border-gray-200">
-        <div className="p-4"></div>
-        {weekDays.map((day, index) => (
-          <div key={index} className="p-4 text-center border-l border-gray-200">
-            <div className="font-medium text-gray-900">{day}</div>
-          </div>
-        ))}
-      </div>
+      {/* Main Schedule Area */}
+      <div className="flex-1 overflow-auto">
+        <div className="relative">
+          {/* Grid Container for Header and Content */}
+          <div className="grid" style={{ gridTemplateColumns: '60px repeat(5, 1fr)' }}>
+            {/* Top-left empty cell */}
+            <div className="sticky top-0 z-10 bg-white border-b border-gray-200"></div>
 
-      <div className="max-h-[600px] overflow-y-auto">
-        <div className="grid grid-cols-6">
-          {/* Time column */}
-          <div className="py-2">
-            {timeSlots.map((time) => (
-              <div key={time} className="text-xs text-gray-500 pr-2 text-right h-12 flex items-start">
-                {time}
+            {/* Weekday Headers */}
+            {weekDays.map((day) => (
+              <div key={day} className="sticky top-0 z-10 bg-white p-4 text-center font-medium text-gray-900 border-b border-l border-gray-200">
+                {day}
               </div>
             ))}
-          </div>
-
-          {/* Day columns */}
-          {weekDays.map((day, dayIndex) => {
-            const dayTemplates = getTemplatesForDay(dayIndex);
             
-            return (
-              <div key={dayIndex} className="border-l border-gray-200 relative">
-                {/* Hour lines */}
-                {timeSlots.map((time) => (
-                  <div
-                    key={time}
-                    className="h-12 border-b border-gray-100"
-                  />
-                ))}
+            {/* Time Labels Column */}
+            <div className="col-start-1 row-start-2">
+              {timeSlots.map((time) => (
+                <div key={time} className="h-12 pr-2 text-right text-xs text-gray-500 border-t border-gray-100 flex items-start pt-1">
+                  {time}
+                </div>
+              ))}
+            </div>
 
-                {/* Schedule Templates */}
-                {dayTemplates.map((template) => {
-                  const position = getTemplatePosition(template);
-                  
-                  return (
-                    <div
-                      key={template.id}
-                      className="absolute left-1 right-1 rounded-lg p-2 cursor-pointer hover:opacity-80 transition-opacity group"
-                      style={{
-                        top: `${position.top}px`,
-                        height: `${position.height}px`,
-                        backgroundColor: template.color + '20',
-                        borderLeft: `4px solid ${template.color}`,
-                        minHeight: '24px'
-                      }}
-                    >
-                      <div className="flex items-start justify-between">
+            {/* Grid Content Area (for lines and events) */}
+            <div className="col-start-2 col-span-5 row-start-2 grid grid-cols-5 relative">
+              {/* Background Grid Lines */}
+              {weekDays.map((_, dayIndex) => (
+                <div key={dayIndex} className="border-l border-gray-200">
+                  {timeSlots.map((time) => (
+                    <div key={time} className="h-12 border-b border-gray-100" />
+                  ))}
+                </div>
+              ))}
+
+              {/* Absolutely Positioned Schedule Templates */}
+              {scheduleTemplates.map((template) => {
+                const position = getTemplatePosition(template);
+                // Sijoitetaan template oikean päivän sarakkeeseen
+                const dayColumn = template.dayOfWeek;
+
+                return (
+                  <div
+                    key={template.id}
+                    className="absolute rounded-lg p-2 cursor-pointer hover:opacity-80 transition-opacity group"
+                    style={{
+                      top: `${position.top}px`,
+                      height: `${position.height}px`,
+                      // Sijoitetaan vasen reuna oikean sarakkeen alkuun ja leveys täyttämään sarake
+                      left: `calc(${dayColumn * 20}% + 4px)`, // 100% / 5 saraketta = 20% per sarake
+                      width: `calc(20% - 8px)`,
+                      backgroundColor: template.color + '20',
+                      borderLeft: `4px solid ${template.color}`,
+                      minHeight: '24px',
+                      zIndex: 10
+                    }}
+                  >
+                     <div className="flex items-start justify-between h-full">
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-gray-900 text-sm truncate">
                             {template.name}
@@ -128,7 +132,7 @@ export default function ScheduleTemplateView() {
                             </div>
                           )}
                         </div>
-                        <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="flex flex-col space-y-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => handleEditTemplate(template)}
                             className="p-1 text-gray-500 hover:text-blue-600 transition-colors"
@@ -143,33 +147,25 @@ export default function ScheduleTemplateView() {
                           </button>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {scheduleTemplates.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-gray-400 mb-4">
-            <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
+                  </div>
+                );
+              })}
+            </div>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Ei tuntiryhmäksi määriteltyjä tunteja</h3>
-          <p className="text-gray-600 mb-4">Luo ensimmäinen tuntiryhmä aloittaaksesi</p>
-          <button
-            onClick={handleAddTemplate}
-            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Lisää tuntiryhmä
-          </button>
         </div>
-      )}
-    </div>
-  );
-}
+
+        {/* Empty state (if no templates exist) */}
+        {scheduleTemplates.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-gray-400 mb-4">
+              <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Ei tuntiryhmäksi määriteltyjä tunteja</h3>
+            <p className="text-gray-600 mb-4">Luo ensimmäinen tuntiryhmä aloittaaksesi</p>
+            <button
+              onClick={handleAddTemplate}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="w-4 h-4 mr-2" />
