@@ -112,7 +112,7 @@ export default function ScheduleTemplateModal() {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="esim. Matematiikka 9A"
+              placeholder="Tuntipalkin numero/nimi"
             />
           </div>
 
