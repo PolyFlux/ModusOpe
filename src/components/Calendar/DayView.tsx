@@ -10,8 +10,8 @@ export default function DayView() {
 
   useEffect(() => {
     if (scrollContainerRef.current) {
-      // Vieritetään näkymä klo 6:00 kohdalle. Yksi tunti on 48px.
-      scrollContainerRef.current.scrollTop = 5 * 48;
+      // Vieritetään näkymä klo 7:00 kohdalle. Yksi tunti on 48px.
+      scrollContainerRef.current.scrollTop = 7 * 48;
     }
   }, [state.selectedDate]); // Vieritys suoritetaan, kun päivämäärä vaihtuu
 
