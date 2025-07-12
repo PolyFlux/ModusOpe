@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { formatDate, isSameDay, addDays } from '../../utils/dateUtils';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
@@ -6,6 +6,15 @@ import { Event } from '../../types';
 
 export default function DayView() {
   const { state, dispatch } = useApp();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      // Vieritetään näkymä klo 6:00 kohdalle. Yksi tunti on 48px.
+      scrollContainerRef.current.scrollTop = 5 * 48;
+    }
+  }, [state.selectedDate]); // Vieritys suoritetaan, kun päivämäärä vaihtuu
+
   const navigateDay = (direction: 'prev' | 'next') => {
     const newDate = addDays(selectedDate, direction === 'next' ? 1 : -1);
     dispatch({ type: 'SET_SELECTED_DATE', payload: newDate });
@@ -35,7 +44,7 @@ export default function DayView() {
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-{/* Day header */}
+      {/* Day header */}
       <div className="p-6 border-b border-gray-200 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <button onClick={() => navigateDay('prev')} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
@@ -63,11 +72,11 @@ export default function DayView() {
       </div>
 
       {/* Day timeline */}
-      <div className="max-h-[600px] overflow-y-auto">
+      <div ref={scrollContainerRef} className="max-h-[600px] overflow-y-auto">
         <div className="flex">
           {/* Time column */}
           <div className="w-20 py-2">
-            {timeSlots.filter((_, i) => i >= 6 && i <= 22).map((time) => (
+            {timeSlots.map((time) => (
               <div key={time} className="h-12 text-xs text-gray-500 pr-2 text-right flex items-start">
                 {time}
               </div>
@@ -77,7 +86,7 @@ export default function DayView() {
           {/* Events column */}
           <div className="flex-1 border-l border-gray-200 relative">
             {/* Hour lines */}
-            {timeSlots.filter((_, i) => i >= 6 && i <= 22).map((time, timeIndex) => (
+            {timeSlots.map((time) => (
               <div
                 key={time}
                 className="h-12 border-b border-gray-100"
@@ -90,14 +99,12 @@ export default function DayView() {
               const startHour = eventDate.getHours();
               const startMinute = eventDate.getMinutes();
               
-              // Calculate position (6 AM = 0, so subtract 6 from hour)
-              const top = ((startHour - 6) * 48) + (startMinute * 48 / 60);
+              const top = (startHour * 48) + (startMinute * 48 / 60);
               
-              // Calculate height (default to 1 hour if no end time)
               let height = 48; // 1 hour default
-              if (event.endTime) {
+              if (event.endTime && event.startTime) {
                 const [endHour, endMinute] = event.endTime.split(':').map(Number);
-                const [startHourTime, startMinuteTime] = event.startTime?.split(':').map(Number) || [startHour, startMinute];
+                const [startHourTime, startMinuteTime] = event.startTime.split(':').map(Number) || [startHour, startMinute];
                 const duration = (endHour - startHourTime) + ((endMinute - startMinuteTime) / 60);
                 height = duration * 48;
               }
@@ -134,8 +141,8 @@ export default function DayView() {
             })}
 
             {dayEvents.length === 0 && (
-              <div className="flex items-center justify-center h-64 text-gray-500">
-                No events scheduled for this day
+              <div className="flex items-center justify-center h-full absolute inset-0 text-gray-500">
+                Ei tapahtumia tälle päivälle
               </div>
             )}
           </div>
