@@ -8,7 +8,7 @@ export default function ScheduleTemplateView() {
   const { scheduleTemplates } = state;
 
   const weekDays = ['Maanantai', 'Tiistai', 'Keskiviikko', 'Torstai', 'Perjantai'];
-  const timeSlots = Array.from({ length: 17 }, (_, i) => {
+  const timeSlots = Array.from({ length: 13 }, (_, i) => {
     const hour = (i + 6).toString().padStart(2, '0');
     return `${hour}:00`;
   });
