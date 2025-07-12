@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Clock, Type, FileText, Palette } from 'lucide-react';
+import { X, Clock, Type, FileText, Palette, Trash2 } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 import { ScheduleTemplate } from '../../types';
 
@@ -83,6 +83,15 @@ export default function ScheduleTemplateModal() {
     dispatch({ type: 'CLOSE_MODALS' });
   };
 
+  const handleDelete = () => {
+    if (selectedScheduleTemplate) {
+      if (confirm('Haluatko varmasti poistaa tämän tuntiryhmän? Tämä poistaa myös kaikki siihen liittyvät tulevat oppitunnit.')) {
+        dispatch({ type: 'DELETE_SCHEDULE_TEMPLATE', payload: selectedScheduleTemplate.id });
+        dispatch({ type: 'CLOSE_MODALS' });
+      }
+    }
+  };
+
   if (!showScheduleTemplateModal) return null;
 
   return (
@@ -101,6 +110,7 @@ export default function ScheduleTemplateModal() {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Form fields remain the same */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <Type className="w-4 h-4 inline mr-2" />
@@ -112,7 +122,7 @@ export default function ScheduleTemplateModal() {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Tuntipalkin numero/nimi"
+              placeholder="esim. Matematiikka 9A"
             />
           </div>
 
@@ -196,31 +206,37 @@ export default function ScheduleTemplateModal() {
                 />
               ))}
             </div>
-            <div className="mt-2 flex items-center space-x-2">
-              <div 
-                className="w-4 h-4 rounded-full border border-gray-300"
-                style={{ backgroundColor: formData.color }}
-              />
-              <span className="text-sm text-gray-600">
-                Valittu väri: {colorOptions.find(c => c.value === formData.color)?.name || 'Mukautettu'}
-              </span>
-            </div>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={() => dispatch({ type: 'CLOSE_MODALS' })}
-              className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              Peruuta
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              {selectedScheduleTemplate ? 'Päivitä' : 'Luo'}
-            </button>
+          {/* ===== BUTTONS SECTION MODIFIED ===== */}
+          <div className="flex justify-between items-center pt-4 border-t mt-4">
+            <div>
+              {selectedScheduleTemplate && (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  className="flex items-center px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Poista
+                </button>
+              )}
+            </div>
+            <div className="flex space-x-3">
+              <button
+                type="button"
+                onClick={() => dispatch({ type: 'CLOSE_MODALS' })}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                Peruuta
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                {selectedScheduleTemplate ? 'Päivitä' : 'Luo'}
+              </button>
+            </div>
           </div>
         </form>
       </div>
