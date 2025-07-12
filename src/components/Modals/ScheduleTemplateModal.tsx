@@ -11,8 +11,8 @@ export default function ScheduleTemplateModal() {
     name: '',
     description: '',
     dayOfWeek: 0,
-    startTime: '08:00',
-    endTime: '09:30',
+    startTime: '08:10',
+    endTime: '09:25',
     color: '#3B82F6'
   });
 
