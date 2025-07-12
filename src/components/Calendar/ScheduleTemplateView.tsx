@@ -102,9 +102,10 @@ export default function ScheduleTemplateView() {
                 // Sijoitetaan template oikean päivän sarakkeeseen
                 const dayColumn = template.dayOfWeek;
 
-                return (
+                                return (
                   <div
                     key={template.id}
+                    onClick={() => handleEditTemplate(template)}
                     className="absolute rounded-lg p-2 cursor-pointer hover:opacity-80 transition-opacity group"
                     style={{
                       top: `${position.top}px`,
@@ -132,15 +133,12 @@ export default function ScheduleTemplateView() {
                             </div>
                           )}
                         </div>
-                        <div className="flex flex-col space-y-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                           <button
-                            onClick={() => handleEditTemplate(template)}
-                            className="p-1 text-gray-500 hover:text-blue-600 transition-colors"
-                          >
-                            <Edit className="w-3 h-3" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteTemplate(template.id)}
+                            onClick={(e) => {
+                              e.stopPropagation(); // Estää muokkausikkunan avautumisen
+                              handleDeleteTemplate(template.id);
+                            }}
                             className="p-1 text-gray-500 hover:text-red-600 transition-colors"
                           >
                             <Trash2 className="w-3 h-3" />
