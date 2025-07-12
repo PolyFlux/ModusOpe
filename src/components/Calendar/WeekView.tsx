@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { formatDate, isToday, isSameDay, addDays } from '../../utils/dateUtils';
 import { Event } from '../../types';
@@ -7,6 +7,14 @@ import { Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-react';
 export default function WeekView() {
   const { state, dispatch } = useApp();
   const { selectedDate, events } = state;
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      // Vieritetään näkymä klo 6:00 kohdalle.
+      scrollContainerRef.current.scrollTop = 5 * 48;
+    }
+  }, [state.selectedDate]);
   
   const [showWeekend, setShowWeekend] = useState(false);
 
@@ -79,7 +87,7 @@ export default function WeekView() {
         </button>
       </div>
 
-      <div className="max-h-[600px] overflow-y-auto">
+      <div ref={scrollContainerRef} className="max-h-[600px] overflow-y-auto">
         {/* Otsikkorivi päiville (ennallaan) */}
         <div className="grid sticky top-0 bg-white z-20 border-b border-gray-200" style={{ gridTemplateColumns: gridColumns }}>
           <div className="py-4 px-2 text-center"></div>
@@ -92,7 +100,7 @@ export default function WeekView() {
         </div>
 
         {/* ========================================================================================== */}
-        {/* UUSI OSA: KOKOPÄIVÄN TAPAHTUMAT (MÄÄRÄAJAT) */}
+        {/* KOKOPÄIVÄN TAPAHTUMAT (MÄÄRÄAJAT) */}
         {/* ========================================================================================== */}
         <div className="grid border-b border-gray-200" style={{ gridTemplateColumns: gridColumns }}>
             <div className="py-1 px-2 text-xs text-gray-500 text-right">koko pv</div>
@@ -121,7 +129,7 @@ export default function WeekView() {
             <div className="grid" style={{ gridTemplateColumns: gridColumns }}>
                 {/* Kellonajat */}
                 <div className="col-start-1">
-                    {timeSlots.filter((_, i) => i >= 6 && i <= 22).map((time) => (
+                    {timeSlots.map((time) => (
                         <div key={time} className="h-12 text-xs text-gray-500 pr-2 text-right flex items-start">{time}</div>
                     ))}
                 </div>
@@ -129,7 +137,7 @@ export default function WeekView() {
                 <div className="col-start-2 col-span-full grid" style={{ gridTemplateColumns: `repeat(${displayDates.length}, 1fr)` }}>
                     {displayDates.map((_, dateIndex) => (
                          <div key={dateIndex} className="border-l border-gray-200">
-                             {timeSlots.filter((_, i) => i >= 6 && i <= 22).map((time) => (
+                             {timeSlots.map((time) => (
                                  <div key={time} className="h-12 border-b border-gray-100" />
                              ))}
                          </div>
@@ -140,7 +148,6 @@ export default function WeekView() {
             <div className="absolute top-0 left-0 w-full h-full grid" style={{ gridTemplateColumns: gridColumns }}>
                 <div className="col-start-1"></div>
                  {displayDates.map((date, dateIndex) => {
-                    // Käytetään vain ajastettuja tapahtumia tässä
                     const timedEvents = getEventsForDay(date).filter(e => !!e.startTime);
                     return (
                         <div key={dateIndex} className="relative">
@@ -148,7 +155,7 @@ export default function WeekView() {
                                 const eventDate = new Date(event.date);
                                 const startHour = eventDate.getHours();
                                 const startMinute = eventDate.getMinutes();
-                                const top = ((startHour - 6) * 48) + (startMinute * 48 / 60);
+                                const top = (startHour * 48) + (startMinute * 48 / 60);
 
                                 let height = 48; // Oletuskorkeus 1 tunti
                                 if (event.endTime && event.startTime) {
