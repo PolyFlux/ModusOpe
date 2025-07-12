@@ -12,7 +12,7 @@ export default function WeekView() {
   useEffect(() => {
     if (scrollContainerRef.current) {
       // Vieritetään näkymä klo 6:00 kohdalle.
-      scrollContainerRef.current.scrollTop = 5 * 48;
+      scrollContainerRef.current.scrollTop = 7 * 48;
     }
   }, [state.selectedDate]);
   
