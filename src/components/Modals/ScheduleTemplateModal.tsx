@@ -54,8 +54,8 @@ export default function ScheduleTemplateModal() {
         name: '',
         description: '',
         dayOfWeek: 0,
-        startTime: '08:00',
-        endTime: '09:30',
+        startTime: '08:10',
+        endTime: '09:25',
         color: '#3B82F6'
       });
     }
@@ -114,7 +114,7 @@ export default function ScheduleTemplateModal() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <Type className="w-4 h-4 inline mr-2" />
-              Tuntiryhmän nimi
+              Nimi
             </label>
             <input
               type="text"
@@ -122,7 +122,7 @@ export default function ScheduleTemplateModal() {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="esim. Matematiikka 9A"
+              placeholder="Tuntiryhmän numero tai nimi"
             />
           </div>
 
