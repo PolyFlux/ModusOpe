@@ -170,8 +170,9 @@ export default function ScheduleTemplateView() {
             >
               <Plus className="w-4 h-4 mr-2" />
             </button>
-          </div>
+                  </div>
          )}
+      </div>
     </div>
   );
 }
