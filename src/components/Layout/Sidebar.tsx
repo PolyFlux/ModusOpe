@@ -57,7 +57,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
           Lisää tapahtuma
         </button>
         <button
-          onClick={() => dispatch({ type: 'TOGGLE_RECURRING_CLASS_MODAL' })}
+          onClick={() => dispatch({ type: 'TOGGLE_COURSE_MODAL' })}
           className="w-full flex items-center justify-center btn-glossy mb-2"
         >
           <BookOpen className="w-4 h-4 mr-2" />
@@ -71,7 +71,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
           Lisää projekti
         </button>
          <button
-          onClick={() => dispatch({ type: 'TOGGLE_EVENT_MODAL' })}
+          onClick={() => dispatch({ type: 'TOGGLE_TASKS_MODAL' })}
           className="w-full flex items-center justify-center btn-glossy mb-2"
         >
           <Calendar className="w-4 h-4 mr-2" />
