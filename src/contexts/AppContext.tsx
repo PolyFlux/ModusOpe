@@ -52,6 +52,7 @@ interface AppState {
   selectedTask?: Task;
   isSidebarCollapsed: boolean;
   isMobileMenuOpen: boolean;
+  selectedKanbanProjectId?: string | null;
 }
 
 type AppAction =
@@ -81,6 +82,7 @@ type AppAction =
   | { type: 'CLOSE_MODALS' }
   | { type: 'TOGGLE_SIDEBAR' }
   | { type: 'TOGGLE_MOBILE_MENU' };
+  | { type: 'SET_KANBAN_PROJECT'; payload: string | null };
 
 const initialState: AppState = {
   events: [
@@ -101,6 +103,7 @@ const initialState: AppState = {
   showTaskModal: false,
   isSidebarCollapsed: false,
   isMobileMenuOpen: false,
+  selectedKanbanProjectId: null,
 };
 
 
@@ -319,6 +322,9 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
     case 'TOGGLE_MOBILE_MENU':
       return { ...state, isMobileMenuOpen: !state.isMobileMenuOpen };
+
+    case 'SET_KANBAN_PROJECT':
+      return { ...state, selectedKanbanProjectId: action.payload };
     
     default:
       return state;
