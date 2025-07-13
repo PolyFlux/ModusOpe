@@ -1,17 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { Project, Task } from '../../types';
-import { BookOpen, ClipboardCheck, Info, AlertCircle, Calendar } from 'lucide-react';
+import { BookOpen, ClipboardCheck, Info, AlertCircle, Calendar, ChevronDown } from 'lucide-react';
 import { formatDate } from '../../utils/dateUtils';
 
-// Määritellään Kanban-sarakkeiden tyypit ja nimet
 const kanbanColumns: { id: Task['status']; title: string }[] = [
   { id: 'todo', title: 'Suunnitteilla' },
   { id: 'inProgress', title: 'Työn alla' },
   { id: 'done', title: 'Valmis' },
 ];
 
-// Yksittäisen tehtäväkortin komponentti (lisätään draggable-ominaisuus)
 const TaskCard = ({ task }: { task: Task }) => {
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
@@ -29,7 +27,7 @@ const TaskCard = ({ task }: { task: Task }) => {
         e.currentTarget.classList.add('opacity-50');
       }}
       onDragEnd={(e) => e.currentTarget.classList.remove('opacity-50')}
-      className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 mb-3 cursor-grab active:cursor-grabbing"
+      className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 mb-3 cursor-grab active:cursor-grabbing w-72 md:w-full flex-shrink-0"
     >
       <div className="flex justify-between items-start mb-2">
         <h4 className="font-semibold text-gray-800 text-sm">{task.title}</h4>
@@ -51,10 +49,9 @@ export default function KanbanView() {
   const { projects, selectedKanbanProjectId } = state;
   const [draggedOverColumn, setDraggedOverColumn] = useState<string | null>(null);
 
-  // ... (useEffect, selectedProject, handleSelectProject, renderProjectList ennallaan)
   const courses = projects.filter(p => p.type === 'course');
   const otherProjects = projects.filter(p => p.type !== 'course');
-  
+
   useEffect(() => {
     if (!selectedKanbanProjectId && projects.length > 0) {
       dispatch({ type: 'SET_KANBAN_PROJECT', payload: projects[0].id });
@@ -93,7 +90,6 @@ export default function KanbanView() {
     </div>
   );
 
-  // Käytetään uutta status-kenttää tehtävien jaotteluun
   const getTasksForColumn = (columnId: Task['status']) => {
     return selectedProject?.tasks.filter(t => t.status === columnId) || [];
   };
@@ -115,39 +111,60 @@ export default function KanbanView() {
   };
 
   return (
-    <div className="flex h-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <aside className="w-1/4 min-w-[250px] bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto">
+    // MUUTOS: Asettelu muuttuu pystyyn mobiilissa
+    <div className="flex flex-col md:flex-row h-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      {/* Sivupalkki näkyy vain leveillä näytöillä */}
+      <aside className="hidden md:block w-1/4 min-w-[250px] bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto">
         <h2 className="text-lg font-bold text-gray-800">Työtilat</h2>
         {renderProjectList('Kurssit', courses, <BookOpen className="w-4 h-4" />)}
         {renderProjectList('Projektit', otherProjects, <ClipboardCheck className="w-4 h-4" />)}
       </aside>
 
-      <main className="flex-1 p-6 flex flex-col">
+      <main className="flex-1 p-4 md:p-6 flex flex-col">
         {selectedProject ? (
           <>
+            {/* Yläpalkki (muokattu mobiilia varten) */}
             <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
-              <h1 className="text-2xl font-bold text-gray-900">{selectedProject.name}</h1>
+              {/* Pudotusvalikko mobiilissa */}
+              <div className="md:hidden relative">
+                <select
+                  value={selectedKanbanProjectId || ''}
+                  onChange={(e) => handleSelectProject(e.target.value)}
+                  className="appearance-none font-bold text-lg bg-transparent border-none p-1 pr-6 -ml-1"
+                >
+                  <optgroup label="Kurssit">
+                    {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </optgroup>
+                  <optgroup label="Projektit">
+                    {otherProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </optgroup>
+                </select>
+                <ChevronDown className="w-5 h-5 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+
+              {/* Normaali otsikko leveillä näytöillä */}
+              <h1 className="hidden md:block text-2xl font-bold text-gray-900">{selectedProject.name}</h1>
+              
               <button className="flex items-center text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md">
                 <Info className="w-4 h-4 mr-2" />
-                Tiedot
+                <span className="hidden md:inline">Tiedot</span>
               </button>
             </div>
-            <div className="flex-1 grid grid-cols-3 gap-6 overflow-x-auto">
+
+            {/* Kanban-sarakkeet */}
+            <div className="flex-1 flex gap-6 overflow-x-auto pb-4">
               {kanbanColumns.map(column => (
                 <div
                   key={column.id}
                   onDrop={(e) => handleDrop(e, column.id)}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setDraggedOverColumn(column.id);
-                  }}
+                  onDragOver={(e) => { e.preventDefault(); setDraggedOverColumn(column.id); }}
                   onDragLeave={() => setDraggedOverColumn(null)}
-                  className={`bg-gray-50 rounded-lg p-3 flex flex-col transition-colors ${
+                  className={`bg-gray-50 rounded-lg p-3 flex flex-col flex-shrink-0 w-80 md:w-full transition-colors ${
                     draggedOverColumn === column.id ? 'bg-blue-50' : ''
                   }`}
                 >
                   <h3 className="font-semibold text-gray-800 mb-4 px-1">{column.title}</h3>
-                  <div className="flex-1 overflow-y-auto pr-2">
+                  <div className="flex-1 overflow-y-auto pr-2 -mr-2">
                     {getTasksForColumn(column.id).map(task => (
                       <TaskCard key={task.id} task={task} />
                     ))}
@@ -163,7 +180,7 @@ export default function KanbanView() {
           </>
         ) : (
           <div className="flex items-center justify-center h-full text-gray-500">
-            <p>Valitse kurssi tai projekti aloittaaksesi.</p>
+            <p>Luo ensin kurssi tai projekti.</p>
           </div>
         )}
       </main>
