@@ -51,6 +51,7 @@ interface AppState {
   selectedRecurringClass?: RecurringClass;
   selectedTask?: Task;
   isSidebarCollapsed: boolean;
+  isMobileMenuOpen: boolean;
 }
 
 type AppAction =
@@ -78,7 +79,8 @@ type AppAction =
   | { type: 'TOGGLE_RECURRING_CLASS_MODAL'; payload?: RecurringClass }
   | { type: 'TOGGLE_TASK_MODAL'; payload?: Task }
   | { type: 'CLOSE_MODALS' }
-  | { type: 'TOGGLE_SIDEBAR' };
+  | { type: 'TOGGLE_SIDEBAR' }
+  | { type: 'TOGGLE_MOBILE_MENU' };
 
 const initialState: AppState = {
   events: [
@@ -98,6 +100,7 @@ const initialState: AppState = {
   showRecurringClassModal: false,
   showTaskModal: false,
   isSidebarCollapsed: false,
+  isMobileMenuOpen: false,
 };
 
 
@@ -313,6 +316,9 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
     case 'TOGGLE_SIDEBAR':
       return { ...state, isSidebarCollapsed: !state.isSidebarCollapsed };
+
+    case 'TOGGLE_MOBILE_MENU':
+      return { ...state, isMobileMenuOpen: !state.isMobileMenuOpen };
     
     default:
       return state;
