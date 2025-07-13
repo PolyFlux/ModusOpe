@@ -1,38 +1,41 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { Project, Task } from '../../types';
 import { BookOpen, ClipboardCheck, Info, AlertCircle, Calendar } from 'lucide-react';
 import { formatDate } from '../../utils/dateUtils';
 
 // Määritellään Kanban-sarakkeiden tyypit ja nimet
-const kanbanColumns = [
+const kanbanColumns: { id: Task['status']; title: string }[] = [
   { id: 'todo', title: 'Suunnitteilla' },
   { id: 'inProgress', title: 'Työn alla' },
   { id: 'done', title: 'Valmis' },
 ];
 
-// Yksittäisen tehtäväkortin komponentti
+// Yksittäisen tehtäväkortin komponentti (lisätään draggable-ominaisuus)
 const TaskCard = ({ task }: { task: Task }) => {
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
-      case 'high':
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
-      case 'medium':
-        return <AlertCircle className="w-4 h-4 text-yellow-500" />;
-      default:
-        return <AlertCircle className="w-4 h-4 text-green-500" />;
+      case 'high': return <AlertCircle className="w-4 h-4 text-red-500" />;
+      case 'medium': return <AlertCircle className="w-4 h-4 text-yellow-500" />;
+      default: return <AlertCircle className="w-4 h-4 text-green-500" />;
     }
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-3 cursor-pointer hover:shadow-md">
+    <div
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData('taskId', task.id);
+        e.currentTarget.classList.add('opacity-50');
+      }}
+      onDragEnd={(e) => e.currentTarget.classList.remove('opacity-50')}
+      className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 mb-3 cursor-grab active:cursor-grabbing"
+    >
       <div className="flex justify-between items-start mb-2">
         <h4 className="font-semibold text-gray-800 text-sm">{task.title}</h4>
         {getPriorityIcon(task.priority)}
       </div>
-      {task.description && (
-        <p className="text-xs text-gray-600 mb-3 line-clamp-2">{task.description}</p>
-      )}
+      {task.description && <p className="text-xs text-gray-600 mb-3 line-clamp-2">{task.description}</p>}
       {task.dueDate && (
         <div className="flex items-center text-xs text-gray-500">
           <Calendar className="w-3 h-3 mr-1.5" />
@@ -46,10 +49,12 @@ const TaskCard = ({ task }: { task: Task }) => {
 export default function KanbanView() {
   const { state, dispatch } = useApp();
   const { projects, selectedKanbanProjectId } = state;
+  const [draggedOverColumn, setDraggedOverColumn] = useState<string | null>(null);
 
+  // ... (useEffect, selectedProject, handleSelectProject, renderProjectList ennallaan)
   const courses = projects.filter(p => p.type === 'course');
   const otherProjects = projects.filter(p => p.type !== 'course');
-
+  
   useEffect(() => {
     if (!selectedKanbanProjectId && projects.length > 0) {
       dispatch({ type: 'SET_KANBAN_PROJECT', payload: projects[0].id });
@@ -88,22 +93,25 @@ export default function KanbanView() {
     </div>
   );
 
-  // Jaotellaan tehtävät oikeisiin sarakkeisiin
-  const getTasksForColumn = (columnId: string) => {
-    if (!selectedProject) return [];
-    switch (columnId) {
-      case 'todo':
-        // Otetaan mukaan tehtävät, jotka eivät ole valmiita.
-        // Yksinkertaisuuden vuoksi kaikki ei-valmiit ovat "Suunnitteilla".
-        return selectedProject.tasks.filter(t => !t.completed);
-      case 'inProgress':
-        // Tähän voisi myöhemmin lisätä oman tilan, esim. `task.status === 'inProgress'`
-        return [];
-      case 'done':
-        return selectedProject.tasks.filter(t => t.completed);
-      default:
-        return [];
+  // Käytetään uutta status-kenttää tehtävien jaotteluun
+  const getTasksForColumn = (columnId: Task['status']) => {
+    return selectedProject?.tasks.filter(t => t.status === columnId) || [];
+  };
+
+  const handleDrop = (e: React.DragEvent, columnId: Task['status']) => {
+    e.preventDefault();
+    const taskId = e.dataTransfer.getData('taskId');
+    if (taskId && selectedKanbanProjectId) {
+      dispatch({
+        type: 'UPDATE_TASK_STATUS',
+        payload: {
+          projectId: selectedKanbanProjectId,
+          taskId,
+          newStatus: columnId,
+        },
+      });
     }
+    setDraggedOverColumn(null);
   };
 
   return (
@@ -124,19 +132,28 @@ export default function KanbanView() {
                 Tiedot
               </button>
             </div>
-
-            {/* Kanban-sarakkeiden renderöinti */}
             <div className="flex-1 grid grid-cols-3 gap-6 overflow-x-auto">
               {kanbanColumns.map(column => (
-                <div key={column.id} className="bg-gray-50 rounded-lg p-4 flex flex-col">
-                  <h3 className="font-semibold text-gray-800 mb-4">{column.title}</h3>
+                <div
+                  key={column.id}
+                  onDrop={(e) => handleDrop(e, column.id)}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDraggedOverColumn(column.id);
+                  }}
+                  onDragLeave={() => setDraggedOverColumn(null)}
+                  className={`bg-gray-50 rounded-lg p-3 flex flex-col transition-colors ${
+                    draggedOverColumn === column.id ? 'bg-blue-50' : ''
+                  }`}
+                >
+                  <h3 className="font-semibold text-gray-800 mb-4 px-1">{column.title}</h3>
                   <div className="flex-1 overflow-y-auto pr-2">
                     {getTasksForColumn(column.id).map(task => (
                       <TaskCard key={task.id} task={task} />
                     ))}
                     {getTasksForColumn(column.id).length === 0 && (
-                      <div className="flex items-center justify-center h-full text-xs text-gray-400">
-                        Ei tehtäviä
+                      <div className="flex items-center justify-center h-full text-xs text-gray-400 p-4 border-2 border-dashed border-gray-300 rounded-lg">
+                        Pudota tehtäviä tähän
                       </div>
                     )}
                   </div>
