@@ -75,35 +75,47 @@ const menuItems = [
       </nav>
 
       {!isSidebarCollapsed && (
-        <div className="p-6 border-t border-gray-200">
+        <div className="hidden md:block p-6 border-t border-gray-200">
           <button
-          onClick={() => dispatch({ type: 'TOGGLE_EVENT_MODAL' })}
-          className="w-full flex items-center justify-center btn-glossy mb-2"
-        >
-          <Calendar className="w-4 h-4 mr-2" />
-          Lisää tapahtuma
-        </button>
-        <button
-          onClick={() => dispatch({ type: 'TOGGLE_COURSE_MODAL' })}
-          className="w-full flex items-center justify-center btn-glossy mb-2"
-        >
-          <BookOpen className="w-4 h-4 mr-2" />
-          Lisää oppitunti
-        </button>
-        <button
-          onClick={() => dispatch({ type: 'TOGGLE_PROJECT_MODAL' })}
-          className="w-full flex items-center justify-center btn-glossy mb-2"
-        >
-          <ClipboardCheck className="w-4 h-4 mr-2" />
-          Lisää projekti
-        </button>
-         <button
-          onClick={() => dispatch({ type: 'TOGGLE_TASK_MODAL' })}
-          className="w-full flex items-center justify-center btn-glossy mb-2"
-        >
-          <CheckSquare className="w-4 h-4 mr-2" />
-          Lisää tehtävä
-        </button>
+            onClick={() => {
+              dispatch({ type: 'TOGGLE_EVENT_MODAL' });
+              if (isMobileMenuOpen) dispatch({ type: 'TOGGLE_MOBILE_MENU' });
+            }}
+            className="w-full flex items-center justify-center btn-glossy mb-2"
+          >
+            <Calendar className="w-4 h-4 mr-2" />
+            Lisää tapahtuma
+          </button>
+          <button
+            onClick={() => {
+              dispatch({ type: 'TOGGLE_COURSE_MODAL' });
+              if (isMobileMenuOpen) dispatch({ type: 'TOGGLE_MOBILE_MENU' });
+            }}
+            className="w-full flex items-center justify-center btn-glossy mb-2"
+          >
+            <BookOpen className="w-4 h-4 mr-2" />
+            Lisää oppitunti
+          </button>
+          <button
+            onClick={() => {
+              dispatch({ type: 'TOGGLE_PROJECT_MODAL' });
+              if (isMobileMenuOpen) dispatch({ type: 'TOGGLE_MOBILE_MENU' });
+            }}
+            className="w-full flex items-center justify-center btn-glossy mb-2"
+          >
+            <ClipboardCheck className="w-4 h-4 mr-2" />
+            Lisää projekti
+          </button>
+          <button
+            onClick={() => {
+              dispatch({ type: 'TOGGLE_TASK_MODAL' });
+              if (isMobileMenuOpen) dispatch({ type: 'TOGGLE_MOBILE_MENU' });
+            }}
+            className="w-full flex items-center justify-center btn-glossy mb-2"
+          >
+            <CheckSquare className="w-4 h-4 mr-2" />
+            Lisää tehtävä
+          </button>
         </div>
       )}
     </div>
