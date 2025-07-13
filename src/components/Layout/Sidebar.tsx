@@ -1,5 +1,3 @@
-// src/components/Layout/Sidebar.tsx
-
 import React from 'react';
 import { Calendar, BookOpen, CheckSquare, ClipboardCheck, Home, ChevronLeft } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
@@ -22,7 +20,6 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   ];
 
   return (
-    // MUUTETUT LUOKAT JA LISÄTTY TRANSITIO
     <div className={`bg-white shadow-lg h-full flex flex-col transition-all duration-300 ${isSidebarCollapsed ? 'w-20' : 'w-64'}`}>
       <div className="p-6 border-b border-gray-200 flex items-center justify-between">
         {/* Piilotetaan teksti, kun palkki on kutistettu */}
