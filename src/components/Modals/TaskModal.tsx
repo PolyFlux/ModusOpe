@@ -1,5 +1,3 @@
-// src/components/Modals/TaskModal.tsx
-
 import React, { useState, useEffect } from 'react';
 import { X, Type, FileText, Calendar, AlertCircle, Bookmark } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
