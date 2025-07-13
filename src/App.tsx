@@ -14,6 +14,7 @@ import CourseModal from './components/Modals/CourseModal';
 import ScheduleTemplateModal from './components/Modals/ScheduleTemplateModal';
 import RecurringClassModal from './components/Modals/RecurringClassModal';
 import TaskModal from './components/Modals/TaskModal';
+import KanbanView from './components/Kanban/KanbanView';
 import { Menu, Plus, Calendar as CalendarIcon, BookOpen, ClipboardCheck, CheckSquare } from 'lucide-react';
 
 function AppContent() {
@@ -30,6 +31,7 @@ function AppContent() {
       case 'courses': return <CourseList />;
       case 'projects': return <ProjectList />;
       case 'tasks': return <TaskList />;
+      case 'kanban': return <KanbanView />;
       default: return <Dashboard />;
     }
   };
