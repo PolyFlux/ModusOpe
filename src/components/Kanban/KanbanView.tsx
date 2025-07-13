@@ -1,17 +1,11 @@
-// src/components/Kanban/KanbanView.tsx
-
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
-import { Project, Task } from '../../types';
-import { BookOpen, ClipboardCheck, Info, AlertCircle, Calendar, ChevronDown } from 'lucide-react';
+import { Project, Task, KanbanColumn } from '../../types';
+import { BookOpen, ClipboardCheck, Info, AlertCircle, Calendar, ChevronDown, Plus } from 'lucide-react';
 import { formatDate } from '../../utils/dateUtils';
 
-const kanbanColumns: { id: Task['status']; title: string }[] = [
-  { id: 'todo', title: 'Suunnitteilla' },
-  { id: 'inProgress', title: 'Työn alla' },
-  { id: 'done', title: 'Valmis' },
-];
 
+// TaskCard-komponentti (pysyy ennallaan)
 const TaskCard = ({ task }: { task: Task }) => {
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
@@ -45,6 +39,51 @@ const TaskCard = ({ task }: { task: Task }) => {
     </div>
   );
 };
+
+// UUSI KOMPONENTTI uuden sarakkeen lisäämistä varten
+const AddColumn = ({ projectId }: { projectId: string }) => {
+    const { dispatch } = useApp();
+    const [isEditing, setIsEditing] = useState(false);
+    const [title, setTitle] = useState('');
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (title.trim()) {
+            dispatch({ type: 'ADD_COLUMN', payload: { projectId, title } });
+            setTitle('');
+            setIsEditing(false);
+        }
+    };
+
+    if (!isEditing) {
+        return (
+            <button
+                onClick={() => setIsEditing(true)}
+                className="w-80 flex-shrink-0 flex items-center justify-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 transition-colors"
+            >
+                <Plus className="w-4 h-4 mr-2" />
+                Lisää uusi säiliö
+            </button>
+        );
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="w-80 flex-shrink-0 p-3 bg-gray-100 rounded-lg">
+            <input
+                autoFocus
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Säiliön nimi..."
+                className="w-full p-2 border border-gray-300 rounded-md"
+            />
+            <div className="mt-2 space-x-2">
+                <button type="submit" className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">Lisää</button>
+                <button type="button" onClick={() => setIsEditing(false)} className="px-3 py-1 text-sm rounded hover:bg-gray-200">Peruuta</button>
+            </div>
+        </form>
+    );
+};
+
 
 export default function KanbanView() {
   const { state, dispatch } = useApp();
@@ -92,17 +131,19 @@ export default function KanbanView() {
     </div>
   );
 
-  const getTasksForColumn = (columnId: Task['status']) => {
-    // Varmistetaan, että vanhat tehtävät ilman statusta menevät oikeaan sarakkeeseen
+  // MUUTETTU: Käyttää nyt columnId:tä ja hanskaa vanhat tehtävät
+  const getTasksForColumn = (columnId: string) => {
+    if (!selectedProject) return [];
     if (columnId === 'todo') {
-      return selectedProject?.tasks.filter(t => t.status === 'todo' || !t.status) || [];
+      return selectedProject.tasks.filter(t => t.columnId === 'todo' || !t.columnId);
     }
-    return selectedProject?.tasks.filter(t => t.status === columnId) || [];
+    return selectedProject.tasks.filter(t => t.columnId === columnId);
   };
 
-  const handleDrop = (e: React.DragEvent, columnId: Task['status']) => {
+  const handleDrop = (e: React.DragEvent, columnId: string) => {
     e.preventDefault();
     const taskId = e.dataTransfer.getData('taskId');
+    // MUUTETTU: newStatus -> columnId
     if (taskId && selectedKanbanProjectId) {
       dispatch({
         type: 'UPDATE_TASK_STATUS',
@@ -149,17 +190,16 @@ export default function KanbanView() {
                 <span className="hidden md:inline">Tiedot</span>
               </button>
             </div>
-
-            {/* KORJATTU OSA: Vaihdettu grid -> flex ja korjattu sarakkeiden leveys */}
+            
             <div className="flex-1 flex gap-6 overflow-x-auto">
-              {kanbanColumns.map(column => (
+              {/* MUUTETTU: Haetaan sarakkeet projektilta */}
+              {selectedProject.columns.map(column => (
                 <div
                   key={column.id}
                   onDrop={(e) => handleDrop(e, column.id)}
                   onDragOver={(e) => { e.preventDefault(); setDraggedOverColumn(column.id); }}
                   onDragLeave={() => setDraggedOverColumn(null)}
-                  // Asetetaan kiinteä leveys ja estetään kutistuminen
-                  className={`bg-gray-50 rounded-lg p-3 flex flex-col w-80 flex-shrink-0 transition-colors ${
+                  className={`bg-gray-100 rounded-lg p-3 flex flex-col w-80 flex-shrink-0 transition-colors ${
                     draggedOverColumn === column.id ? 'bg-blue-50' : ''
                   }`}
                 >
@@ -176,6 +216,8 @@ export default function KanbanView() {
                   </div>
                 </div>
               ))}
+              {/* LISÄTTY: Uuden sarakkeen lisäys */}
+              <AddColumn projectId={selectedProject.id} />
             </div>
           </>
         ) : (
