@@ -81,7 +81,7 @@ type AppAction =
   | { type: 'TOGGLE_TASK_MODAL'; payload?: Task }
   | { type: 'CLOSE_MODALS' }
   | { type: 'TOGGLE_SIDEBAR' }
-  | { type: 'TOGGLE_MOBILE_MENU' };
+  | { type: 'TOGGLE_MOBILE_MENU' }
   | { type: 'SET_KANBAN_PROJECT'; payload: string | null };
 
 const initialState: AppState = {
