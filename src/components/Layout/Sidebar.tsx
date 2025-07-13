@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, BookOpen, CheckSquare, ClipboardCheck, Home, ChevronLeft } from 'lucide-react';
+import { Calendar, BookOpen, CheckSquare, ClipboardCheck, Home, ChevronLeft, LayoutDashboard } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 
 interface SidebarProps {
@@ -16,7 +16,8 @@ const menuItems = [
     { id: 'calendar', label: 'Kalenteri', icon: Calendar },
     { id: 'courses', label: 'Kurssit', icon: BookOpen },
     { id: 'projects', label: 'Projektit', icon: ClipboardCheck },
-    { id: 'tasks', label: 'Tehtävät', icon: CheckSquare }
+    { id: 'tasks', label: 'Tehtävät', icon: CheckSquare },
+    { id: 'kanban', label: 'Kanban', icon: LayoutDashboard }
   ];
   
   const sidebarClasses = `
