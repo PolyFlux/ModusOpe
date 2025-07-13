@@ -364,7 +364,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
           const newColumn: KanbanColumn = { id: nanoid(), title };
           return {
             ...project,
-            columns: [...project.columns, newColumn],
+            columns: [...(project.columns || []), newColumn],
           };
         }
         return project;
