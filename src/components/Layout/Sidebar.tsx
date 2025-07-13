@@ -95,7 +95,7 @@ const menuItems = [
             className="w-full flex items-center justify-center btn-glossy mb-2"
           >
             <BookOpen className="w-4 h-4 mr-2" />
-            Lisää oppitunti
+            Lisää kurssi
           </button>
           <button
             onClick={() => {
