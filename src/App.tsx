@@ -12,13 +12,13 @@ import CourseModal from './components/Modals/CourseModal';
 import ScheduleTemplateModal from './components/Modals/ScheduleTemplateModal';
 import RecurringClassModal from './components/Modals/RecurringClassModal';
 import TaskModal from './components/Modals/TaskModal';
-import { Menu } from 'lucide-react'; // Tuodaan Menu-ikoni
+import { Menu, Plus, Calendar, BookOpen, ClipboardCheck, CheckSquare } from 'lucide-react';
 
-// UUSI SISÄINEN KOMPONENTTI
 function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const { state, dispatch } = useApp();
   const { isMobileMenuOpen } = state;
+  const [isFabMenuOpen, setFabMenuOpen] = useState(false);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -30,6 +30,13 @@ function AppContent() {
       default: return <Dashboard />;
     }
   };
+
+  const fabActions = [
+    { label: 'Tapahtuma', icon: Calendar, action: () => dispatch({ type: 'TOGGLE_EVENT_MODAL' }) },
+    { label: 'Oppitunti', icon: BookOpen, action: () => dispatch({ type: 'TOGGLE_COURSE_MODAL' }) },
+    { label: 'Projekti', icon: ClipboardCheck, action: () => dispatch({ type: 'TOGGLE_PROJECT_MODAL' }) },
+    { label: 'Tehtävä', icon: CheckSquare, action: () => dispatch({ type: 'TOGGLE_TASK_MODAL' }) },
+  ];
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -58,7 +65,38 @@ function AppContent() {
         />
       )}
 
-      {/* Modaali-ikkunat pysyvät ennallaan */}
+      <div className="md:hidden fixed bottom-6 right-6 z-40">
+        {/* Toimintovalikko, joka näkyy kun FAB on auki */}
+        {isFabMenuOpen && (
+          <div className="flex flex-col items-end space-y-3 mb-3">
+            {fabActions.map(item => (
+              <div key={item.label} className="flex items-center">
+                <span className="bg-white text-sm text-gray-800 rounded-md px-3 py-1 mr-3 shadow-sm">{item.label}</span>
+                <button
+                  onClick={() => {
+                    item.action();
+                    setFabMenuOpen(false);
+                  }}
+                  className="w-12 h-12 flex items-center justify-center bg-white rounded-full shadow-lg text-blue-600"
+                >
+                  <item.icon className="w-6 h-6" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Pääpainike */}
+        <button
+          onClick={() => setFabMenuOpen(!isFabMenuOpen)}
+          className="w-16 h-16 flex items-center justify-center rounded-full text-white shadow-xl transition-transform duration-200"
+          style={{ backgroundImage: 'linear-gradient(to bottom, #6b7280, #1f2937)' }}
+        >
+          <Plus className={`w-8 h-8 transition-transform duration-300 ${isFabMenuOpen ? 'rotate-45' : ''}`} />
+        </button>
+      </div>
+
+      {/* Modaali-ikkunat */}
       <EventModal />
       <ProjectModal />
       <CourseModal />
