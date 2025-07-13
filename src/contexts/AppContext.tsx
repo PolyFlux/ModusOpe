@@ -82,7 +82,8 @@ type AppAction =
   | { type: 'CLOSE_MODALS' }
   | { type: 'TOGGLE_SIDEBAR' }
   | { type: 'TOGGLE_MOBILE_MENU' }
-  | { type: 'SET_KANBAN_PROJECT'; payload: string | null };
+  | { type: 'SET_KANBAN_PROJECT'; payload: string | null }
+  | { type: 'UPDATE_TASK_STATUS'; payload: { projectId: string; taskId: string; newStatus: 'todo' | 'inProgress' | 'done' } };
 
 const initialState: AppState = {
   events: [
@@ -325,6 +326,27 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
     case 'SET_KANBAN_PROJECT':
       return { ...state, selectedKanbanProjectId: action.payload };
+
+    case 'UPDATE_TASK_STATUS': {
+      const { projectId, taskId, newStatus } = action.payload;
+      const newProjects = state.projects.map(project => {
+        if (project.id === projectId) {
+          const newTasks = project.tasks.map(task => {
+            if (task.id === taskId) {
+              return {
+                ...task,
+                status: newStatus,
+                completed: newStatus === 'done' // Merkitään valmiiksi vain, kun siirretään 'done'-sarakkeeseen
+              };
+            }
+            return task;
+          });
+          return { ...project, tasks: newTasks };
+        }
+        return project;
+      });
+      return { ...state, projects: newProjects, events: updateAllEvents(state, newProjects) };
+    }
     
     default:
       return state;
