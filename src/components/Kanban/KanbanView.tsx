@@ -193,7 +193,7 @@ export default function KanbanView() {
             
             <div className="flex-1 flex gap-6 overflow-x-auto">
               {/* MUUTETTU: Haetaan sarakkeet projektilta */}
-              {selectedProject.columns.map(column => (
+              {selectedProject.columns?.map(column => (
                 <div
                   key={column.id}
                   onDrop={(e) => handleDrop(e, column.id)}
