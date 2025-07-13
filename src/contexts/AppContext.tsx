@@ -159,7 +159,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
     case 'ADD_PROJECT': {
       // Määritellään tyyppi, joka sisältää väliaikaisen kentän
-      type AddProjectPayload = Project & { templateGroupName?: string };
+      type AddProjectPayload = Omit<Project, 'columns'> & { templateGroupName?: string };
       const payload = action.payload as AddProjectPayload;
       
       // Erotellaan tuntiryhmän nimi varsinaisesta projektidatasta
@@ -172,7 +172,12 @@ function appReducer(state: AppState, action: AppAction): AppState {
         { id: 'done', title: 'Valmis' },
       ];
       
-      const newProject: Project = projectData;
+      const newProject: Project = {
+        ...(projectData as Project), // Muunnetaan takaisin Project-tyyppiseksi
+        id: projectData.id || nanoid(),
+        tasks: projectData.tasks || [],
+        columns: defaultColumns,
+      };
 
       const newProjects = [...state.projects, newProject];
       
