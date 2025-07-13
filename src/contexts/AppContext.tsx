@@ -50,6 +50,7 @@ interface AppState {
   selectedScheduleTemplate?: ScheduleTemplate;
   selectedRecurringClass?: RecurringClass;
   selectedTask?: Task;
+  isSidebarCollapsed: boolean;
 }
 
 type AppAction =
@@ -77,6 +78,7 @@ type AppAction =
   | { type: 'TOGGLE_RECURRING_CLASS_MODAL'; payload?: RecurringClass }
   | { type: 'TOGGLE_TASK_MODAL'; payload?: Task }
   | { type: 'CLOSE_MODALS' };
+  | { type: 'TOGGLE_SIDEBAR' };
 
 const initialState: AppState = {
   events: [
@@ -95,6 +97,7 @@ const initialState: AppState = {
   showScheduleTemplateModal: false,
   showRecurringClassModal: false,
   showTaskModal: false,
+  isSidebarCollapsed: false,
 };
 
 
@@ -195,10 +198,12 @@ function appReducer(state: AppState, action: AppAction): AppState {
         events: finalEvents
       };
     }
+      
     case 'UPDATE_PROJECT': {
       const newProjects = state.projects.map(p => p.id === action.payload.id ? action.payload : p);
       return { ...state, projects: newProjects, events: updateAllEvents(state, newProjects) };
     }
+      
     case 'DELETE_PROJECT': {
       const newProjects = state.projects.filter(project => project.id !== action.payload);
       const remainingEvents = state.events.filter(event => event.projectId !== action.payload);
@@ -305,6 +310,9 @@ function appReducer(state: AppState, action: AppAction): AppState {
         selectedRecurringClass: undefined,
         selectedTask: undefined,
       };
+
+    case 'TOGGLE_SIDEBAR':
+      return { ...state, isSidebarCollapsed: !state.isSidebarCollapsed };
     
     default:
       return state;
