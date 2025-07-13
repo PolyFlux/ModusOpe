@@ -1,4 +1,3 @@
-// src/components/Courses/CourseList.tsx
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { BookOpen, Calendar, CheckSquare, Plus } from 'lucide-react';
