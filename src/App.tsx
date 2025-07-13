@@ -1,5 +1,3 @@
-// src/App.tsx
-
 import React, { useState } from 'react';
 import { AppProvider, useApp } from './contexts/AppContext';
 import Sidebar from './components/Layout/Sidebar';
