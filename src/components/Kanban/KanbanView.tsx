@@ -27,7 +27,7 @@ const TaskCard = ({ task }: { task: Task }) => {
         e.currentTarget.classList.add('opacity-50');
       }}
       onDragEnd={(e) => e.currentTarget.classList.remove('opacity-50')}
-      className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 mb-3 cursor-grab active:cursor-grabbing w-72 md:w-full flex-shrink-0"
+      className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 mb-3 cursor-grab active:cursor-grabbing"
     >
       <div className="flex justify-between items-start mb-2">
         <h4 className="font-semibold text-gray-800 text-sm">{task.title}</h4>
@@ -91,6 +91,10 @@ export default function KanbanView() {
   );
 
   const getTasksForColumn = (columnId: Task['status']) => {
+    // Varmistetaan, että vanhat tehtävät ilman statusta menevät oikeaan sarakkeeseen
+    if (columnId === 'todo') {
+      return selectedProject?.tasks.filter(t => t.status === 'todo' || !t.status) || [];
+    }
     return selectedProject?.tasks.filter(t => t.status === columnId) || [];
   };
 
@@ -111,79 +115,5 @@ export default function KanbanView() {
   };
 
   return (
-    // MUUTOS: Asettelu muuttuu pystyyn mobiilissa
     <div className="flex flex-col md:flex-row h-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      {/* Sivupalkki näkyy vain leveillä näytöillä */}
-      <aside className="hidden md:block w-1/4 min-w-[250px] bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto">
-        <h2 className="text-lg font-bold text-gray-800">Työtilat</h2>
-        {renderProjectList('Kurssit', courses, <BookOpen className="w-4 h-4" />)}
-        {renderProjectList('Projektit', otherProjects, <ClipboardCheck className="w-4 h-4" />)}
-      </aside>
-
-      <main className="flex-1 p-4 md:p-6 flex flex-col">
-        {selectedProject ? (
-          <>
-            {/* Yläpalkki (muokattu mobiilia varten) */}
-            <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
-              {/* Pudotusvalikko mobiilissa */}
-              <div className="md:hidden relative">
-                <select
-                  value={selectedKanbanProjectId || ''}
-                  onChange={(e) => handleSelectProject(e.target.value)}
-                  className="appearance-none font-bold text-lg bg-transparent border-none p-1 pr-6 -ml-1"
-                >
-                  <optgroup label="Kurssit">
-                    {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </optgroup>
-                  <optgroup label="Projektit">
-                    {otherProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </optgroup>
-                </select>
-                <ChevronDown className="w-5 h-5 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
-              </div>
-
-              {/* Normaali otsikko leveillä näytöillä */}
-              <h1 className="hidden md:block text-2xl font-bold text-gray-900">{selectedProject.name}</h1>
-              
-              <button className="flex items-center text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md">
-                <Info className="w-4 h-4 mr-2" />
-                <span className="hidden md:inline">Tiedot</span>
-              </button>
-            </div>
-
-            {/* Kanban-sarakkeet */}
-            <div className="flex-1 flex gap-6 overflow-x-auto pb-4">
-              {kanbanColumns.map(column => (
-                <div
-                  key={column.id}
-                  onDrop={(e) => handleDrop(e, column.id)}
-                  onDragOver={(e) => { e.preventDefault(); setDraggedOverColumn(column.id); }}
-                  onDragLeave={() => setDraggedOverColumn(null)}
-                  className={`bg-gray-50 rounded-lg p-3 flex flex-col flex-shrink-0 w-80 md:w-full transition-colors ${
-                    draggedOverColumn === column.id ? 'bg-blue-50' : ''
-                  }`}
-                >
-                  <h3 className="font-semibold text-gray-800 mb-4 px-1">{column.title}</h3>
-                  <div className="flex-1 overflow-y-auto pr-2 -mr-2">
-                    {getTasksForColumn(column.id).map(task => (
-                      <TaskCard key={task.id} task={task} />
-                    ))}
-                    {getTasksForColumn(column.id).length === 0 && (
-                      <div className="flex items-center justify-center h-full text-xs text-gray-400 p-4 border-2 border-dashed border-gray-300 rounded-lg">
-                        Pudota tehtäviä tähän
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className="flex items-center justify-center h-full text-gray-500">
-            <p>Luo ensin kurssi tai projekti.</p>
-          </div>
-        )}
-      </main>
-    </div>
-  );
-}
+      <aside className="hidden md:block w-1/4 min-w-[250px] bg-gray-50 border-r border-
