@@ -26,7 +26,7 @@ export default function Calendar() {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="p-4 md:p-8 h-full flex flex-col">
       <CalendarHeader />
       <div className="flex-1 overflow-hidden">
         {renderView()}
