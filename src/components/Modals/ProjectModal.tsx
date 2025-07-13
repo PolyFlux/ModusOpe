@@ -160,7 +160,7 @@ export default function ProjectModal() {
       title: newTask.title,
       description: newTask.description,
       completed: false,
-      status: 'todo',
+      columnId: 'todo',
       priority: newTask.priority,
       dueDate: newTask.dueDate ? new Date(newTask.dueDate) : undefined,
       projectId: selectedProject?.id || 'temp-id'
