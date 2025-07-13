@@ -1,3 +1,5 @@
+// src/components/Kanban/KanbanView.tsx
+
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { Project, Task } from '../../types';
@@ -116,4 +118,72 @@ export default function KanbanView() {
 
   return (
     <div className="flex flex-col md:flex-row h-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <aside className="hidden md:block w-1/4 min-w-[250px] bg-gray-50 border-r border-
+      <aside className="hidden md:block w-1/4 min-w-[250px] bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto">
+        <h2 className="text-lg font-bold text-gray-800">Työtilat</h2>
+        {renderProjectList('Kurssit', courses, <BookOpen className="w-4 h-4" />)}
+        {renderProjectList('Projektit', otherProjects, <ClipboardCheck className="w-4 h-4" />)}
+      </aside>
+
+      <main className="flex-1 p-4 md:p-6 flex flex-col overflow-hidden">
+        {selectedProject ? (
+          <>
+            <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6 flex-shrink-0">
+              <div className="md:hidden relative">
+                <select
+                  value={selectedKanbanProjectId || ''}
+                  onChange={(e) => handleSelectProject(e.target.value)}
+                  className="appearance-none font-bold text-lg bg-transparent border-none p-1 pr-6 -ml-1"
+                >
+                  <optgroup label="Kurssit">
+                    {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </optgroup>
+                  <optgroup label="Projektit">
+                    {otherProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </optgroup>
+                </select>
+                <ChevronDown className="w-5 h-5 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+              <h1 className="hidden md:block text-2xl font-bold text-gray-900">{selectedProject.name}</h1>
+              <button className="flex items-center text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md">
+                <Info className="w-4 h-4 mr-2" />
+                <span className="hidden md:inline">Tiedot</span>
+              </button>
+            </div>
+
+            {/* KORJATTU OSA: Vaihdettu grid -> flex ja korjattu sarakkeiden leveys */}
+            <div className="flex-1 flex gap-6 overflow-x-auto">
+              {kanbanColumns.map(column => (
+                <div
+                  key={column.id}
+                  onDrop={(e) => handleDrop(e, column.id)}
+                  onDragOver={(e) => { e.preventDefault(); setDraggedOverColumn(column.id); }}
+                  onDragLeave={() => setDraggedOverColumn(null)}
+                  // Asetetaan kiinteä leveys ja estetään kutistuminen
+                  className={`bg-gray-50 rounded-lg p-3 flex flex-col w-80 flex-shrink-0 transition-colors ${
+                    draggedOverColumn === column.id ? 'bg-blue-50' : ''
+                  }`}
+                >
+                  <h3 className="font-semibold text-gray-800 mb-4 px-1">{column.title}</h3>
+                  <div className="flex-1 overflow-y-auto -mr-2 pr-2">
+                    {getTasksForColumn(column.id).map(task => (
+                      <TaskCard key={task.id} task={task} />
+                    ))}
+                    {getTasksForColumn(column.id).length === 0 && (
+                      <div className="flex items-center justify-center h-full text-xs text-gray-400 p-4 border-2 border-dashed border-gray-300 rounded-lg">
+                        Pudota tehtäviä tähän
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-500">
+            <p>Luo ensin kurssi tai projekti.</p>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
