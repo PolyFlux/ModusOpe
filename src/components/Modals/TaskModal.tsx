@@ -47,8 +47,8 @@ export default function TaskModal() {
       id: selectedTask?.id || Date.now().toString(),
       title: formData.title,
       description: formData.description,
-      completed: selectedTask?.completed || false,
-      status: selectedTask?.status || 'todo',
+      completed: selectedTask?.status === 'done',
+      columnId: selectedTask?.columnId || 'todo',
       priority: formData.priority,
       dueDate: formData.dueDate ? new Date(formData.dueDate) : undefined,
       projectId: formData.projectId
