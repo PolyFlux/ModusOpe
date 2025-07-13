@@ -77,7 +77,7 @@ type AppAction =
   | { type: 'TOGGLE_SCHEDULE_TEMPLATE_MODAL'; payload?: ScheduleTemplate }
   | { type: 'TOGGLE_RECURRING_CLASS_MODAL'; payload?: RecurringClass }
   | { type: 'TOGGLE_TASK_MODAL'; payload?: Task }
-  | { type: 'CLOSE_MODALS' };
+  | { type: 'CLOSE_MODALS' }
   | { type: 'TOGGLE_SIDEBAR' };
 
 const initialState: AppState = {
