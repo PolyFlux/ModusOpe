@@ -1,3 +1,4 @@
+import { nanoid } from 'nanoid';
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { Event, Project, Task, CalendarView, ScheduleTemplate, RecurringClass } from '../types';
 
@@ -162,6 +163,14 @@ function appReducer(state: AppState, action: AppAction): AppState {
       
       // Erotellaan tuntiryhmän nimi varsinaisesta projektidatasta
       const { templateGroupName, ...projectData } = payload;
+      
+      // LUODAAN OLETUSSARAKKEET UUDELLE PROJEKTILLE
+      const defaultColumns: KanbanColumn[] = [
+        { id: 'todo', title: 'Suunnitteilla' },
+        { id: 'inProgress', title: 'Työn alla' },
+        { id: 'done', title: 'Valmis' },
+      ];
+      
       const newProject: Project = projectData;
 
       const newProjects = [...state.projects, newProject];
@@ -239,7 +248,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
         return { ...state, projects: newProjects, events: updateAllEvents(state, newProjects) };
     }
 
-    // ... loput reducer-funktiosta pysyy ennallaan
     case 'ADD_SCHEDULE_TEMPLATE':
       return { ...state, scheduleTemplates: [...state.scheduleTemplates, action.payload] };
 
