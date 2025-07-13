@@ -32,8 +32,8 @@ const menuItems = [
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         {!isSidebarCollapsed && (
           <div>
-            <h1 className="text-xl font-bold text-gray-800">OpettajaHub</h1>
-            <p className="text-sm text-gray-600 mt-1">Kalenteri & Projektit</p>
+            <h1 className="text-xl font-bold text-gray-800">ModusOpe</h1>
+            <p className="text-sm text-gray-600 mt-1">Opettajien modus operandi</p>
           </div>
         )}
         <button
