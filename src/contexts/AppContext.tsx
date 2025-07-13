@@ -84,7 +84,8 @@ type AppAction =
   | { type: 'TOGGLE_SIDEBAR' }
   | { type: 'TOGGLE_MOBILE_MENU' }
   | { type: 'SET_KANBAN_PROJECT'; payload: string | null }
-  | { type: 'UPDATE_TASK_STATUS'; payload: { projectId: string; taskId: string; newStatus: 'todo' | 'inProgress' | 'done' } };
+  | { type: 'UPDATE_TASK_STATUS'; payload: { projectId: string; taskId: string; newStatus: 'todo' | 'inProgress' | 'done' } }
+  | { type: 'ADD_COLUMN'; payload: { projectId: string; title: string } };
 
 const initialState: AppState = {
   events: [
@@ -355,7 +356,22 @@ function appReducer(state: AppState, action: AppAction): AppState {
       });
       return { ...state, projects: newProjects, events: updateAllEvents(state, newProjects) };
     }
-    
+
+    case 'ADD_COLUMN': {
+      const { projectId, title } = action.payload;
+      const newProjects = state.projects.map(project => {
+        if (project.id === projectId) {
+          const newColumn: KanbanColumn = { id: nanoid(), title };
+          return {
+            ...project,
+            columns: [...project.columns, newColumn],
+          };
+        }
+        return project;
+      });
+      return { ...state, projects: newProjects };
+    }
+      
     default:
       return state;
   }
