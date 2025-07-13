@@ -11,7 +11,14 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   const { state, dispatch } = useApp();
   const { isSidebarCollapsed, isMobileMenuOpen } = state;
 
-  // MUUTETUT LUOKAT RESPONSIIVISUUTTA VARTEN
+const menuItems = [
+    { id: 'dashboard', label: 'Kojelauta', icon: Home },
+    { id: 'calendar', label: 'Kalenteri', icon: Calendar },
+    { id: 'courses', label: 'Kurssit', icon: BookOpen },
+    { id: 'projects', label: 'Projektit', icon: ClipboardCheck },
+    { id: 'tasks', label: 'Tehtävät', icon: CheckSquare }
+  ];
+  
   const sidebarClasses = `
     h-full bg-white shadow-lg flex flex-col transition-all duration-300 z-40
     fixed md:relative 
