@@ -12,7 +12,7 @@ import CourseModal from './components/Modals/CourseModal';
 import ScheduleTemplateModal from './components/Modals/ScheduleTemplateModal';
 import RecurringClassModal from './components/Modals/RecurringClassModal';
 import TaskModal from './components/Modals/TaskModal';
-import { Menu, Plus, Calendar, BookOpen, ClipboardCheck, CheckSquare } from 'lucide-react';
+import { Menu, Plus, Calendar as CalendarIcon, BookOpen, ClipboardCheck, CheckSquare } from 'lucide-react';
 
 function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -32,7 +32,7 @@ function AppContent() {
   };
 
   const fabActions = [
-    { label: 'Tapahtuma', icon: Calendar, action: () => dispatch({ type: 'TOGGLE_EVENT_MODAL' }) },
+    { label: 'Tapahtuma', icon: CalendarIcon, action: () => dispatch({ type: 'TOGGLE_EVENT_MODAL' }) },
     { label: 'Oppitunti', icon: BookOpen, action: () => dispatch({ type: 'TOGGLE_COURSE_MODAL' }) },
     { label: 'Projekti', icon: ClipboardCheck, action: () => dispatch({ type: 'TOGGLE_PROJECT_MODAL' }) },
     { label: 'Tehtävä', icon: CheckSquare, action: () => dispatch({ type: 'TOGGLE_TASK_MODAL' }) },
