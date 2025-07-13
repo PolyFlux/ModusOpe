@@ -1,3 +1,5 @@
+// src/App.tsx
+
 import React, { useState } from 'react';
 import { AppProvider, useApp } from './contexts/AppContext';
 import Sidebar from './components/Layout/Sidebar';
@@ -18,6 +20,7 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const { state, dispatch } = useApp();
   const { isMobileMenuOpen } = state;
+
   const [isFabMenuOpen, setFabMenuOpen] = useState(false);
 
   const renderContent = () => {
@@ -42,12 +45,11 @@ function AppContent() {
     <div className="flex h-screen bg-gray-100">
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
       <div className="flex flex-col flex-1">
-        {/* Yläpalkki hampurilaispainikkeelle mobiilissa */}
         <header className="md:hidden p-4 bg-white shadow-md flex items-center">
           <button onClick={() => dispatch({ type: 'TOGGLE_MOBILE_MENU' })}>
             <Menu className="w-6 h-6" />
           </button>
-          <h1 className="text-lg font-bold ml-4">OpettajaHub</h1>
+          <h1 className="text-lg font-bold ml-4">ModusOpe</h1>
         </header>
 
         <main className="flex-1 overflow-auto">
@@ -57,7 +59,7 @@ function AppContent() {
         </main>
       </div>
 
-      {/* Taustan peittokuva mobiilivalikolle */}
+      {/* Sivupalkin peittokuva */}
       {isMobileMenuOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
@@ -65,8 +67,15 @@ function AppContent() {
         />
       )}
 
+      {/* UUSI/MUUTETTU OSA: Lisää-valikon peittokuva */}
+      {isFabMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-20 z-30 md:hidden"
+          onClick={() => setFabMenuOpen(false)}
+        />
+      )}
+
       <div className="md:hidden fixed bottom-6 right-6 z-40">
-        {/* Toimintovalikko, joka näkyy kun FAB on auki */}
         {isFabMenuOpen && (
           <div className="flex flex-col items-end space-y-3 mb-3">
             {fabActions.map(item => (
@@ -86,7 +95,6 @@ function AppContent() {
           </div>
         )}
 
-        {/* Pääpainike */}
         <button
           onClick={() => setFabMenuOpen(!isFabMenuOpen)}
           className="w-16 h-16 flex items-center justify-center rounded-full text-white shadow-xl transition-transform duration-200"
@@ -96,7 +104,6 @@ function AppContent() {
         </button>
       </div>
 
-      {/* Modaali-ikkunat */}
       <EventModal />
       <ProjectModal />
       <CourseModal />
