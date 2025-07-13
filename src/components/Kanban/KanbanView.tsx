@@ -1,23 +1,60 @@
 import React, { useEffect } from 'react';
 import { useApp } from '../../contexts/AppContext';
-import { Project } from '../../types';
-import { BookOpen, ClipboardCheck, Info } from 'lucide-react';
+import { Project, Task } from '../../types';
+import { BookOpen, ClipboardCheck, Info, AlertCircle, Calendar } from 'lucide-react';
+import { formatDate } from '../../utils/dateUtils';
+
+// Määritellään Kanban-sarakkeiden tyypit ja nimet
+const kanbanColumns = [
+  { id: 'todo', title: 'Suunnitteilla' },
+  { id: 'inProgress', title: 'Työn alla' },
+  { id: 'done', title: 'Valmis' },
+];
+
+// Yksittäisen tehtäväkortin komponentti
+const TaskCard = ({ task }: { task: Task }) => {
+  const getPriorityIcon = (priority: string) => {
+    switch (priority) {
+      case 'high':
+        return <AlertCircle className="w-4 h-4 text-red-500" />;
+      case 'medium':
+        return <AlertCircle className="w-4 h-4 text-yellow-500" />;
+      default:
+        return <AlertCircle className="w-4 h-4 text-green-500" />;
+    }
+  };
+
+  return (
+    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-3 cursor-pointer hover:shadow-md">
+      <div className="flex justify-between items-start mb-2">
+        <h4 className="font-semibold text-gray-800 text-sm">{task.title}</h4>
+        {getPriorityIcon(task.priority)}
+      </div>
+      {task.description && (
+        <p className="text-xs text-gray-600 mb-3 line-clamp-2">{task.description}</p>
+      )}
+      {task.dueDate && (
+        <div className="flex items-center text-xs text-gray-500">
+          <Calendar className="w-3 h-3 mr-1.5" />
+          <span>{formatDate(new Date(task.dueDate))}</span>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function KanbanView() {
   const { state, dispatch } = useApp();
   const { projects, selectedKanbanProjectId } = state;
 
-  // Erotellaan kurssit ja projektit omiksi listoikseen
   const courses = projects.filter(p => p.type === 'course');
   const otherProjects = projects.filter(p => p.type !== 'course');
 
-  // Asetetaan oletusprojekti, kun komponentti ladataan ensimmäistä kertaa
   useEffect(() => {
     if (!selectedKanbanProjectId && projects.length > 0) {
       dispatch({ type: 'SET_KANBAN_PROJECT', payload: projects[0].id });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projects, selectedKanbanProjectId]);
+  }, [projects, selectedKanbanProjectId, dispatch]);
 
   const selectedProject = projects.find(p => p.id === selectedKanbanProjectId);
 
@@ -25,7 +62,6 @@ export default function KanbanView() {
     dispatch({ type: 'SET_KANBAN_PROJECT', payload: projectId });
   };
   
-  // Apukomponentti listan renderöintiin
   const renderProjectList = (title: string, items: Project[], icon: React.ReactNode) => (
     <div>
       <h3 className="text-sm font-semibold text-gray-500 uppercase px-4 mt-6 mb-2 flex items-center">
@@ -52,20 +88,35 @@ export default function KanbanView() {
     </div>
   );
 
+  // Jaotellaan tehtävät oikeisiin sarakkeisiin
+  const getTasksForColumn = (columnId: string) => {
+    if (!selectedProject) return [];
+    switch (columnId) {
+      case 'todo':
+        // Otetaan mukaan tehtävät, jotka eivät ole valmiita.
+        // Yksinkertaisuuden vuoksi kaikki ei-valmiit ovat "Suunnitteilla".
+        return selectedProject.tasks.filter(t => !t.completed);
+      case 'inProgress':
+        // Tähän voisi myöhemmin lisätä oman tilan, esim. `task.status === 'inProgress'`
+        return [];
+      case 'done':
+        return selectedProject.tasks.filter(t => t.completed);
+      default:
+        return [];
+    }
+  };
+
   return (
-    <div className="flex h-full bg-white rounded-lg shadow-sm border border-gray-200">
-      {/* Vasen lista kursseille ja projekteille */}
+    <div className="flex h-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       <aside className="w-1/4 min-w-[250px] bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto">
         <h2 className="text-lg font-bold text-gray-800">Työtilat</h2>
         {renderProjectList('Kurssit', courses, <BookOpen className="w-4 h-4" />)}
         {renderProjectList('Projektit', otherProjects, <ClipboardCheck className="w-4 h-4" />)}
       </aside>
 
-      {/* Päänäkymä Kanban-taululle */}
       <main className="flex-1 p-6 flex flex-col">
         {selectedProject ? (
           <>
-            {/* Yläpalkki */}
             <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6">
               <h1 className="text-2xl font-bold text-gray-900">{selectedProject.name}</h1>
               <button className="flex items-center text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md">
@@ -74,10 +125,23 @@ export default function KanbanView() {
               </button>
             </div>
 
-            {/* Itse Kanban-taulun paikka */}
-            <div className="flex-1 text-center text-gray-500">
-              <p>Kanban-sarakkeet tulevat tähän...</p>
-              {/* Tähän lisätään myöhemmin sarakkeet ja kortit */}
+            {/* Kanban-sarakkeiden renderöinti */}
+            <div className="flex-1 grid grid-cols-3 gap-6 overflow-x-auto">
+              {kanbanColumns.map(column => (
+                <div key={column.id} className="bg-gray-50 rounded-lg p-4 flex flex-col">
+                  <h3 className="font-semibold text-gray-800 mb-4">{column.title}</h3>
+                  <div className="flex-1 overflow-y-auto pr-2">
+                    {getTasksForColumn(column.id).map(task => (
+                      <TaskCard key={task.id} task={task} />
+                    ))}
+                    {getTasksForColumn(column.id).length === 0 && (
+                      <div className="flex items-center justify-center h-full text-xs text-gray-400">
+                        Ei tehtäviä
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
           </>
         ) : (
