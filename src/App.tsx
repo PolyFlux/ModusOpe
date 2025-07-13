@@ -44,7 +44,7 @@ function AppContent() {
   return (
     <div className="flex h-screen bg-gray-100">
       <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="flex flex-col flex-1">
         <header className="md:hidden p-4 bg-white shadow-md flex items-center">
           <button onClick={() => dispatch({ type: 'TOGGLE_MOBILE_MENU' })}>
             <Menu className="w-6 h-6" />
@@ -52,7 +52,7 @@ function AppContent() {
           <h1 className="text-lg font-bold ml-4">ModusOpe</h1>
         </header>
 
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-y-auto">
           <div className="p-4 md:p-8">
             {renderContent()}
           </div>
