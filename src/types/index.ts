@@ -1,3 +1,8 @@
+export interface KanbanColumn {
+  id: string;
+  title: string;
+}
+
 export interface Event {
   id: string;
   title: string;
@@ -29,6 +34,7 @@ export interface Project {
   startDate: Date;
   endDate?: Date;
   tasks: Task[];
+  columns: KanbanColumn[];
   files?: Array<{
     id: string;
     name: string;
@@ -45,7 +51,7 @@ export interface Task {
   title: string;
   description?: string;
   completed: boolean;
-  status: 'todo' | 'inProgress' | 'done';
+  columnId: string;
   priority: 'low' | 'medium' | 'high';
   dueDate?: Date;
   projectId: string;
