@@ -52,7 +52,7 @@ function AppContent() {
           <h1 className="text-lg font-bold ml-4">ModusOpe</h1>
         </header>
 
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-auto">
           <div className="p-4 md:p-8">
             {renderContent()}
           </div>
