@@ -12,15 +12,11 @@ export default function WeekView() {
   
   const [showWeekend, setShowWeekend] = useState(false);
 
-  // KORJAUS: Käytetään pientä 50ms viivettä varmistamaan, että renderöinti on valmis.
+  // Palattu siistimpään useLayoutEffect-toteutukseen nyt kun layout on korjattu
   useLayoutEffect(() => {
-    const timer = setTimeout(() => {
-      if (scrollContainerRef.current) {
-        scrollContainerRef.current.scrollTop = 7 * 48;
-      }
-    }, 50);
-
-    return () => clearTimeout(timer);
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 7 * 48;
+    }
   }, [state.selectedDate, state.currentView, showWeekend]);
 
   const getMondayOfWeek = (date: Date) => {
