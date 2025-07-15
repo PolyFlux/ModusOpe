@@ -10,11 +10,14 @@ export default function WeekView() {
   const { selectedDate, events } = state;
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // =======================================================================
+  // MUUTOS: Lisätty currentView riippuvuuksiin
+  // =======================================================================
   useEffect(() => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = 7 * 48;
+      scrollContainerRef.current.scrollTop = 7 * 48; // Vierittää klo 7:00 kohdalle
     }
-  }, [state.selectedDate]);
+  }, [state.selectedDate, state.currentView]);
   
   const [showWeekend, setShowWeekend] = useState(false);
 
@@ -90,9 +93,6 @@ export default function WeekView() {
         </button>
       </div>
 
-      {/* ======================================================================= */}
-      {/* LUKITTU OTSikko JA KOKO PÄIVÄN TAPAHTUMAT */}
-      {/* ======================================================================= */}
       <div className="sticky top-0 bg-white z-20 flex-shrink-0">
           <div className="grid border-b border-gray-200" style={{ gridTemplateColumns: gridColumns }}>
             <div className="py-4 px-2 text-center"></div>
