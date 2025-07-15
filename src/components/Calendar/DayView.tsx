@@ -3,7 +3,7 @@ import { useApp } from '../../contexts/AppContext';
 import { formatDate, isSameDay, addDays } from '../../utils/dateUtils';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { Event } from '../../types';
-import { GENERAL_TASKS_PROJECT_ID } from '../../contexts/AppContext'; // LISÄTTY
+import { GENERAL_TASKS_PROJECT_ID } from '../../contexts/AppContext';
 
 export default function DayView() {
   const { state, dispatch } = useApp();
@@ -31,9 +31,13 @@ export default function DayView() {
   const dayEvents = events.filter(event => 
     isSameDay(new Date(event.date), selectedDate)
   );
+  
+  // Erotellaan koko päivän ja ajastetut tapahtumat
+  const allDayEvents = dayEvents.filter(e => !e.startTime);
+  const timedEvents = dayEvents.filter(e => !!e.startTime);
+
 
   const handleEventClick = (event: Event) => {
-    // KORJATTU: Estetään modaalin avaus yleisille tehtäville
     if (event.type === 'deadline' && event.projectId) {
       if (event.projectId === GENERAL_TASKS_PROJECT_ID) {
           return;
@@ -50,8 +54,9 @@ export default function DayView() {
   });
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-      <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-full">
+      {/* Day header */}
+      <div className="p-6 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center space-x-2">
           <button onClick={() => navigateDay('prev')} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
             <ChevronLeft className="w-5 h-5" />
@@ -77,8 +82,32 @@ export default function DayView() {
         </p>
       </div>
 
-      <div ref={scrollContainerRef} className="max-h-[600px] overflow-y-auto">
+      {/* ======================================================================= */}
+      {/* LUKITTU KOKO PÄIVÄN TAPAHTUMAT -OSIO */}
+      {/* ======================================================================= */}
+      <div className="sticky top-0 bg-white z-10 border-b border-gray-200 flex-shrink-0">
+         <div className="flex">
+            <div className="w-20 py-1 px-2 text-xs text-gray-500 text-right flex items-center justify-end">koko pv</div>
+            <div className="flex-1 p-1 border-l border-gray-200 min-h-[30px] space-y-1">
+              {allDayEvents.map(event => (
+                  <div
+                      key={event.id}
+                      onClick={() => handleEventClick(event)}
+                      className="text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity"
+                      style={{ backgroundColor: event.color + '20', color: event.color, borderLeft: `3px solid ${event.color}` }}
+                  >
+                      {event.title}
+                  </div>
+              ))}
+            </div>
+         </div>
+      </div>
+
+
+      {/* Day timeline */}
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
         <div className="flex">
+          {/* Time column */}
           <div className="w-20 py-2">
             {timeSlots.map((time) => (
               <div key={time} className="h-12 text-xs text-gray-500 pr-2 text-right flex items-start">
@@ -87,7 +116,9 @@ export default function DayView() {
             ))}
           </div>
 
+          {/* Events column */}
           <div className="flex-1 border-l border-gray-200 relative">
+            {/* Hour lines */}
             {timeSlots.map((time) => (
               <div
                 key={time}
@@ -95,14 +126,15 @@ export default function DayView() {
               />
             ))}
 
-            {dayEvents.map((event) => {
+            {/* Timed Events */}
+            {timedEvents.map((event) => {
               const eventDate = new Date(event.date);
               const startHour = eventDate.getHours();
               const startMinute = eventDate.getMinutes();
               
               const top = (startHour * 48) + (startMinute * 48 / 60);
               
-              let height = 48; 
+              let height = 48; // 1 hour default
               if (event.endTime && event.startTime) {
                 const [endHour, endMinute] = event.endTime.split(':').map(Number);
                 const [startHourTime, startMinuteTime] = event.startTime.split(':').map(Number) || [startHour, startMinute];
@@ -141,7 +173,7 @@ export default function DayView() {
               );
             })}
 
-            {dayEvents.length === 0 && (
+            {timedEvents.length === 0 && allDayEvents.length === 0 && (
               <div className="flex items-center justify-center h-full absolute inset-0 text-gray-500">
                 Ei tapahtumia tälle päivälle
               </div>
