@@ -46,6 +46,12 @@ export interface Project {
   parentCourseId?: string;
 }
 
+export interface Subtask {
+  id: string;
+  title: string;
+  completed: boolean;
+}
+
 export interface Task {
   id: string;
   title: string;
@@ -55,6 +61,7 @@ export interface Task {
   priority: 'low' | 'medium' | 'high';
   dueDate?: Date;
   projectId: string;
+  subtasks?: Subtask[];
 }
 
 export interface ScheduleTemplate {
