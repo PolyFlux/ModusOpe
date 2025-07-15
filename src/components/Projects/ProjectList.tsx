@@ -41,7 +41,7 @@ export default function ProjectList() {
       </div>
 
       {/* Project Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
         {projects.map((project) => {
           const taskStats = getTaskStats(project.id);
           const completionRate = taskStats.total > 0 ? (taskStats.completed / taskStats.total) * 100 : 0;
