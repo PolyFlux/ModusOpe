@@ -1,5 +1,6 @@
 export function formatDate(date: Date): string {
-  return date.toLocaleDateString('en-US', {
+  // MUUTOS: vaihdettu 'en-US' -> 'fi-FI'
+  return date.toLocaleDateString('fi-FI', {
     year: 'numeric',
     month: 'long',
     day: 'numeric'
@@ -86,7 +87,8 @@ export function addMonths(date: Date, months: number): Date {
 }
 
 export function getMonthName(date: Date): string {
-  return date.toLocaleDateString('en-US', { month: 'long' });
+  // MUUTOS: vaihdettu 'en-US' -> 'fi-FI'
+  return date.toLocaleDateString('fi-FI', { month: 'long' });
 }
 
 export function getYear(date: Date): number {
