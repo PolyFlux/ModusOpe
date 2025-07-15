@@ -85,7 +85,9 @@ type AppAction =
   | { type: 'TOGGLE_MOBILE_MENU' }
   | { type: 'SET_KANBAN_PROJECT'; payload: string | null }
   | { type: 'UPDATE_TASK_STATUS'; payload: { projectId: string; taskId: string; newStatus: string } }
-  | { type: 'ADD_COLUMN'; payload: { projectId: string; title: string } };
+  | { type: 'ADD_COLUMN'; payload: { projectId: string; title: string } }
+  | { type: 'UPDATE_COLUMN'; payload: { projectId: string; column: KanbanColumn } }
+  | { type: 'DELETE_COLUMN'; payload: { projectId: string; columnId: string } };
 
 const initialState: AppState = {
   events: [
@@ -384,6 +386,35 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, projects: newProjects };
     }
       
+    case 'UPDATE_COLUMN': {
+      const { projectId, column } = action.payload;
+      const newProjects = state.projects.map(p => {
+        if (p.id === projectId) {
+          return {
+            ...p,
+            columns: p.columns.map(c => c.id === column.id ? column : c),
+          };
+        }
+        return p;
+      });
+      return { ...state, projects: newProjects };
+    }
+
+    case 'DELETE_COLUMN': {
+      const { projectId, columnId } = action.payload;
+      const newProjects = state.projects.map(p => {
+        if (p.id === projectId) {
+          return {
+            ...p,
+            columns: p.columns.filter(c => c.id !== columnId),
+            tasks: p.tasks.filter(t => t.columnId !== columnId), // Poistetaan myös säiliön tehtävät
+          };
+        }
+        return p;
+      });
+      return { ...state, projects: newProjects, events: updateAllEvents(state, newProjects) };
+    }
+
     default:
       return state;
   }
