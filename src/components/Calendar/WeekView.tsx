@@ -9,19 +9,20 @@ export default function WeekView() {
   const { state, dispatch } = useApp();
   const { selectedDate, events } = state;
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  
+  // KORJAUS: Siirretään showWeekend-tilan alustus ennen kuin sitä käytetään
+  // useLayoutEffect-koukussa.
+  const [showWeekend, setShowWeekend] = useState(false);
 
-  // KORJAUS: Käytetään useLayoutEffectiä ja pientä viivettä setTimeoutilla.
   useLayoutEffect(() => {
     const timer = setTimeout(() => {
       if (scrollContainerRef.current) {
-        scrollContainerRef.current.scrollTop = 7 * 48; // Vieritys klo 7 kohdalle
+        scrollContainerRef.current.scrollTop = 7 * 48;
       }
     }, 0);
 
     return () => clearTimeout(timer);
-  }, [state.selectedDate, state.currentView, showWeekend]); // Lisätty showWeekend riippuvuuksiin
-  
-  const [showWeekend, setShowWeekend] = useState(false);
+  }, [state.selectedDate, state.currentView, showWeekend]);
 
   const getMondayOfWeek = (date: Date) => {
     const d = new Date(date);
