@@ -1,6 +1,6 @@
 import { nanoid } from 'nanoid';
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
-import { Event, Project, Task, CalendarView, ScheduleTemplate, RecurringClass, KanbanColumn } from '../types';
+import { Event, Project, Task, CalendarView, ScheduleTemplate, RecurringClass, KanbanColumn, Subtask } from '../types';
 
 function generateProjectDeadlineEvents(projects: Project[]): Event[] {
   return projects
@@ -66,6 +66,9 @@ type AppAction =
   | { type: 'ADD_TASK'; payload: { projectId: string; task: Task } }
   | { type: 'UPDATE_TASK'; payload: { projectId: string; task: Task } }
   | { type: 'DELETE_TASK'; payload: { projectId: string; taskId: string } }
+  | { type: 'ADD_SUBTASK'; payload: { projectId: string; taskId: string; subtask: Subtask } }
+  | { type: 'UPDATE_SUBTASK'; payload: { projectId: string; taskId: string; subtask: Subtask } }
+  | { type: 'DELETE_SUBTASK'; payload: { projectId: string; taskId: string; subtaskId: string } }
   | { type: 'ADD_SCHEDULE_TEMPLATE'; payload: ScheduleTemplate }
   | { type: 'UPDATE_SCHEDULE_TEMPLATE'; payload: ScheduleTemplate }
   | { type: 'DELETE_SCHEDULE_TEMPLATE'; payload: string }
@@ -262,6 +265,66 @@ function appReducer(state: AppState, action: AppAction): AppState {
         );
         return { ...state, projects: newProjects, events: updateAllEvents(state, newProjects) };
     }
+    
+    case 'ADD_SUBTASK': {
+      const { projectId, taskId, subtask } = action.payload;
+      const newProjects = state.projects.map(p =>
+        p.id === projectId
+          ? {
+              ...p,
+              tasks: p.tasks.map(t =>
+                t.id === taskId
+                  ? { ...t, subtasks: [...(t.subtasks || []), subtask] }
+                  : t
+              ),
+            }
+          : p
+      );
+      return { ...state, projects: newProjects };
+    }
+
+    case 'UPDATE_SUBTASK': {
+      const { projectId, taskId, subtask } = action.payload;
+      const newProjects = state.projects.map(p =>
+        p.id === projectId
+          ? {
+              ...p,
+              tasks: p.tasks.map(t =>
+                t.id === taskId
+                  ? {
+                      ...t,
+                      subtasks: t.subtasks?.map(st =>
+                        st.id === subtask.id ? subtask : st
+                      ),
+                    }
+                  : t
+              ),
+            }
+          : p
+      );
+      return { ...state, projects: newProjects };
+    }
+
+    case 'DELETE_SUBTASK': {
+      const { projectId, taskId, subtaskId } = action.payload;
+      const newProjects = state.projects.map(p =>
+        p.id === projectId
+          ? {
+              ...p,
+              tasks: p.tasks.map(t =>
+                t.id === taskId
+                  ? {
+                      ...t,
+                      subtasks: t.subtasks?.filter(st => st.id !== subtaskId),
+                    }
+                  : t
+              ),
+            }
+          : p
+      );
+      return { ...state, projects: newProjects };
+    }
+
 
     case 'ADD_SCHEDULE_TEMPLATE':
       return { ...state, scheduleTemplates: [...state.scheduleTemplates, action.payload] };
