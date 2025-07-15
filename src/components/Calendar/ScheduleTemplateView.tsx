@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 import { ScheduleTemplate } from '../../types';
 
 export default function ScheduleTemplateView() {
@@ -22,7 +22,7 @@ export default function ScheduleTemplateView() {
   };
 
   const handleDeleteTemplate = (templateId: string) => {
-    if (confirm('Haluatko varmasti poistaa tämän tuntiryhmän?')) {
+    if (confirm('Haluatko varmasti poistaa tämän tuntiryhmän? Tämä poistaa myös kaikki siihen liittyvät tulevat oppitunnit.')) {
       dispatch({ type: 'DELETE_SCHEDULE_TEMPLATE', payload: templateId });
     }
   };
@@ -31,10 +31,9 @@ export default function ScheduleTemplateView() {
     const [startHour, startMinute] = template.startTime.split(':').map(Number);
     const [endHour, endMinute] = template.endTime.split(':').map(Number);
     
-    // Kellonaika alkaa klo 6:00, joten vähennetään se laskuista
     const startPosition = ((startHour - 6) * 60) + startMinute;
     const duration = ((endHour - startHour) * 60) + (endMinute - startMinute);
-    const hourRowHeight = 48; // 48px per tunti
+    const hourRowHeight = 48;
     
     return {
       top: (startPosition / 60) * hourRowHeight,
@@ -67,11 +66,11 @@ export default function ScheduleTemplateView() {
           {/* Grid Container for Header and Content */}
           <div className="grid" style={{ gridTemplateColumns: '60px repeat(5, 1fr)' }}>
             {/* Top-left empty cell */}
-            <div className="sticky top-0 z-10 bg-white border-b border-gray-200"></div>
+            <div className="sticky top-0 z-20 bg-white border-b border-gray-200"></div>
 
             {/* Weekday Headers */}
             {weekDays.map((day) => (
-              <div key={day} className="sticky top-0 z-10 bg-white p-4 text-center font-medium text-gray-900 border-b border-l border-gray-200">
+              <div key={day} className="sticky top-0 z-20 bg-white p-4 text-center font-medium text-gray-900 border-b border-l border-gray-200">
                 {day}
               </div>
             ))}
@@ -86,68 +85,63 @@ export default function ScheduleTemplateView() {
             </div>
 
             {/* Grid Content Area (for lines and events) */}
-            <div className="col-start-2 col-span-5 row-start-2 grid grid-cols-5 relative">
-              {/* Background Grid Lines */}
+            <div className="col-start-2 col-span-5 row-start-2 grid grid-cols-5">
               {weekDays.map((_, dayIndex) => (
-                <div key={dayIndex} className="border-l border-gray-200">
+                <div key={dayIndex} className="relative border-l border-gray-200">
+                  {/* Background time slots for this column */}
                   {timeSlots.map((time) => (
                     <div key={time} className="h-12 border-b border-gray-100" />
                   ))}
+                  
+                  {/* Templates for this day, positioned absolutely within this column */}
+                  {scheduleTemplates
+                    .filter(t => t.dayOfWeek === dayIndex)
+                    .map((template) => {
+                      const position = getTemplatePosition(template);
+                      return (
+                        <div
+                          key={template.id}
+                          onClick={() => handleEditTemplate(template)}
+                          className="absolute left-1 right-1 rounded-lg p-2 cursor-pointer hover:opacity-80 transition-opacity group z-10"
+                          style={{
+                            top: `${position.top}px`,
+                            height: `${position.height}px`,
+                            backgroundColor: template.color + '20',
+                            borderLeft: `4px solid ${template.color}`,
+                            minHeight: '24px',
+                          }}
+                        >
+                          <div className="flex items-start justify-between h-full">
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-gray-900 text-sm truncate">
+                                {template.name}
+                              </div>
+                              <div className="text-xs text-gray-600">
+                                {template.startTime} - {template.endTime}
+                              </div>
+                              {template.description && (
+                                <div className="text-xs text-gray-500 mt-1 truncate">
+                                  {template.description}
+                                </div>
+                              )}
+                            </div>
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteTemplate(template.id);
+                                }}
+                                className="p-1 text-gray-500 hover:text-red-600 transition-colors"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
                 </div>
               ))}
-
-              {/* Absolutely Positioned Schedule Templates */}
-              {scheduleTemplates.map((template) => {
-                const position = getTemplatePosition(template);
-                // Sijoitetaan template oikean päivän sarakkeeseen
-                const dayColumn = template.dayOfWeek;
-
-                                return (
-                  <div
-                    key={template.id}
-                    onClick={() => handleEditTemplate(template)}
-                    className="absolute rounded-lg p-2 cursor-pointer hover:opacity-80 transition-opacity group"
-                    style={{
-                      top: `${position.top}px`,
-                      height: `${position.height}px`,
-                      // Sijoitetaan vasen reuna oikean sarakkeen alkuun ja leveys täyttämään sarake
-                      left: `calc(${dayColumn * 20}% + 4px)`, // 100% / 5 saraketta = 20% per sarake
-                      width: `calc(20% - 8px)`,
-                      backgroundColor: template.color + '20',
-                      borderLeft: `4px solid ${template.color}`,
-                      minHeight: '24px',
-                      zIndex: 10
-                    }}
-                  >
-                     <div className="flex items-start justify-between h-full">
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-gray-900 text-sm truncate">
-                            {template.name}
-                          </div>
-                          <div className="text-xs text-gray-600">
-                            {template.startTime} - {template.endTime}
-                          </div>
-                          {template.description && (
-                            <div className="text-xs text-gray-500 mt-1 truncate">
-                              {template.description}
-                            </div>
-                          )}
-                        </div>
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation(); // Estää muokkausikkunan avautumisen
-                              handleDeleteTemplate(template.id);
-                            }}
-                            className="p-1 text-gray-500 hover:text-red-600 transition-colors"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-                  </div>
-                );
-              })}
             </div>
           </div>
         </div>
