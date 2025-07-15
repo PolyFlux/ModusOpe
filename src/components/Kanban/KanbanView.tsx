@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { Project, Task, KanbanColumn } from '../../types';
-import { BookOpen, ClipboardCheck, Info, AlertCircle, Calendar, ChevronDown, Plus, MoreHorizontal, Edit, Trash2, Lock } from 'lucide-react';
+import { BookOpen, ClipboardCheck, Info, AlertCircle, Calendar, ChevronDown, Plus, MoreHorizontal, Edit, Trash2, Lock, Inbox } from 'lucide-react';
 import { formatDate } from '../../utils/dateUtils';
+import { GENERAL_TASKS_PROJECT_ID } from '../../contexts/AppContext';
 
 
 const TaskCard = ({ task }: { task: Task }) => {
@@ -19,6 +20,7 @@ const TaskCard = ({ task }: { task: Task }) => {
       draggable
       onDragStart={(e) => {
         e.dataTransfer.setData('taskId', task.id);
+        e.dataTransfer.setData('projectId', task.projectId);
         e.currentTarget.classList.add('opacity-50');
       }}
       onDragEnd={(e) => e.currentTarget.classList.remove('opacity-50')}
@@ -59,9 +61,23 @@ const KanbanColumnComponent = ({ column, tasks, projectId }: { column: KanbanCol
       dispatch({ type: 'DELETE_COLUMN', payload: { projectId, columnId: column.id } });
     }
   };
+  
+    const onDrop = (e: React.DragEvent) => {
+    const taskId = e.dataTransfer.getData('taskId');
+    const sourceProjectId = e.dataTransfer.getData('projectId');
+    dispatch({
+      type: 'UPDATE_TASK_STATUS',
+      payload: { projectId: sourceProjectId, taskId, newStatus: column.id },
+    });
+  };
+
 
   return (
-    <div className={`p-3 flex flex-col w-80 flex-shrink-0`}>
+    <div 
+        className={`p-3 flex flex-col w-80 flex-shrink-0`}
+        onDragOver={e => e.preventDefault()}
+        onDrop={onDrop}
+    >
       <div className="flex justify-between items-center mb-4 px-1">
         {isEditing ? (
           <input
@@ -173,14 +189,17 @@ export default function KanbanView() {
   const { projects, selectedKanbanProjectId } = state;
   const [draggedOverColumn, setDraggedOverColumn] = useState<string | null>(null);
 
+  const generalProject = projects.find(p => p.id === GENERAL_TASKS_PROJECT_ID);
   const courses = projects.filter(p => p.type === 'course');
-  const otherProjects = projects.filter(p => p.type !== 'course');
+  const otherProjects = projects.filter(p => p.type !== 'course' && p.id !== GENERAL_TASKS_PROJECT_ID);
 
   useEffect(() => {
     if (!selectedKanbanProjectId && projects.length > 0) {
-      dispatch({ type: 'SET_KANBAN_PROJECT', payload: projects[0].id });
+      // Oletuksena valitaan yleiset tehtävät, jos olemassa. Muuten ensimmäinen projekti.
+      const defaultProject = generalProject ? generalProject.id : projects[0].id;
+      dispatch({ type: 'SET_KANBAN_PROJECT', payload: defaultProject });
     }
-  }, [projects, selectedKanbanProjectId, dispatch]);
+  }, [projects, selectedKanbanProjectId, dispatch, generalProject]);
 
   const selectedProject = projects.find(p => p.id === selectedKanbanProjectId);
 
@@ -216,6 +235,7 @@ export default function KanbanView() {
 
   const getTasksForColumn = (columnId: string) => {
     if (!selectedProject) return [];
+    // Oletussäiliö "Suunnitteilla" näyttää myös ne tehtävät, joilla ei ole vielä saraketta
     if (columnId === 'todo') {
       return selectedProject.tasks.filter(t => t.columnId === 'todo' || !t.columnId);
     }
@@ -225,11 +245,12 @@ export default function KanbanView() {
   const handleDrop = (e: React.DragEvent, columnId: string) => {
     e.preventDefault();
     const taskId = e.dataTransfer.getData('taskId');
-    if (taskId && selectedKanbanProjectId) {
+    const projectId = e.dataTransfer.getData('projectId');
+    if (taskId && projectId) {
       dispatch({
         type: 'UPDATE_TASK_STATUS',
         payload: {
-          projectId: selectedKanbanProjectId,
+          projectId: projectId,
           taskId,
           newStatus: columnId,
         },
@@ -242,6 +263,9 @@ export default function KanbanView() {
     <div className="flex flex-col md:flex-row h-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       <aside className="hidden md:block w-1/4 min-w-[250px] bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto">
         <h2 className="text-lg font-bold text-gray-800">Työtilat</h2>
+        
+        {generalProject && renderProjectList('Yleiset', [generalProject], <Inbox className="w-4 h-4" />)}
+        
         {renderProjectList('Kurssit', courses, <BookOpen className="w-4 h-4" />)}
         {renderProjectList('Projektit', otherProjects, <ClipboardCheck className="w-4 h-4" />)}
       </aside>
@@ -256,6 +280,7 @@ export default function KanbanView() {
                   onChange={(e) => handleSelectProject(e.target.value)}
                   className="appearance-none font-bold text-lg bg-transparent border-none p-1 pr-6 -ml-1"
                 >
+                    {generalProject && <option value={generalProject.id}>{generalProject.name}</option>}
                   <optgroup label="Kurssit">
                     {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </optgroup>
@@ -291,12 +316,14 @@ export default function KanbanView() {
                   />
                 </div>
               ))}
-              <AddColumn projectId={selectedProject.id} />
+              {selectedProject.id !== GENERAL_TASKS_PROJECT_ID && (
+                 <AddColumn projectId={selectedProject.id} />
+              )}
             </div>
           </>
         ) : (
           <div className="flex items-center justify-center h-full text-gray-500">
-            <p>Luo ensin kurssi tai projekti.</p>
+            <p>Valitse työtila vasemmalta.</p>
           </div>
         )}
       </main>
