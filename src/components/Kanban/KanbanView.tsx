@@ -204,7 +204,7 @@ export default function KanbanView() {
                   }`}
                 >
                   <h3 className="font-semibold text-gray-800 mb-4 px-1">{column.title}</h3>
-                  <div className="flex-1 overflow-y-auto -mr-2 pr-2">
+                  <div className="flex-1 overflow-y-auto -mr-2 pr-2 min-h-[300px]">
                     {getTasksForColumn(column.id).map(task => (
                       <TaskCard key={task.id} task={task} />
                     ))}
