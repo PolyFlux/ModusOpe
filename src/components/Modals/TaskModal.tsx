@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Type, FileText, Calendar, AlertCircle, Bookmark } from 'lucide-react';
+import { X, Type, FileText, Calendar, AlertCircle, Bookmark, Plus, Trash2 } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
-import { Task } from '../../types';
+import { Task, Subtask } from '../../types';
+import { nanoid } from 'nanoid';
 
 export default function TaskModal() {
   const { state, dispatch } = useApp();
@@ -12,8 +13,12 @@ export default function TaskModal() {
     description: '',
     priority: 'medium' as Task['priority'],
     dueDate: '',
-    projectId: ''
+    projectId: '',
+    subtasks: [] as Subtask[],
   });
+  
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
+
 
   useEffect(() => {
     if (selectedTask) {
@@ -22,7 +27,8 @@ export default function TaskModal() {
         description: selectedTask.description || '',
         priority: selectedTask.priority,
         dueDate: selectedTask.dueDate ? new Date(selectedTask.dueDate).toISOString().split('T')[0] : '',
-        projectId: selectedTask.projectId
+        projectId: selectedTask.projectId,
+        subtasks: selectedTask.subtasks || [],
       });
     } else {
       const defaultProjectId = projects.length > 0 ? projects[0].id : '';
@@ -31,10 +37,42 @@ export default function TaskModal() {
         description: '',
         priority: 'medium',
         dueDate: '',
-        projectId: defaultProjectId
+        projectId: defaultProjectId,
+        subtasks: [],
       });
     }
   }, [selectedTask, showTaskModal, projects]);
+
+  const handleSubtaskChange = (subtaskId: string, completed: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      subtasks: prev.subtasks.map(st =>
+        st.id === subtaskId ? { ...st, completed } : st
+      ),
+    }));
+  };
+
+  const handleAddSubtask = () => {
+    if (newSubtaskTitle.trim() === '') return;
+    const newSubtask: Subtask = {
+      id: nanoid(),
+      title: newSubtaskTitle,
+      completed: false,
+    };
+    setFormData(prev => ({
+      ...prev,
+      subtasks: [...prev.subtasks, newSubtask],
+    }));
+    setNewSubtaskTitle('');
+  };
+  
+  const handleDeleteSubtask = (subtaskId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      subtasks: prev.subtasks.filter(st => st.id !== subtaskId),
+    }));
+  };
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,11 +85,12 @@ export default function TaskModal() {
       id: selectedTask?.id || Date.now().toString(),
       title: formData.title,
       description: formData.description,
-      completed: selectedTask?.status === 'done',
+      completed: selectedTask?.completed || false,
       columnId: selectedTask?.columnId || 'todo',
       priority: formData.priority,
       dueDate: formData.dueDate ? new Date(formData.dueDate) : undefined,
-      projectId: formData.projectId
+      projectId: formData.projectId,
+      subtasks: formData.subtasks
     };
 
     if (selectedTask) {
@@ -166,6 +205,46 @@ export default function TaskModal() {
               />
             </div>
           </div>
+          
+            {/* Subtasks Section */}
+        <div>
+          <h4 className="text-sm font-medium text-gray-700 mb-2">Alitehtävät</h4>
+          <div className="space-y-2">
+            {formData.subtasks.map(subtask => (
+              <div key={subtask.id} className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  checked={subtask.completed}
+                  onChange={e => handleSubtaskChange(subtask.id, e.target.checked)}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <span className={`flex-1 ${subtask.completed ? 'line-through text-gray-500' : ''}`}>
+                  {subtask.title}
+                </span>
+                <button type="button" onClick={() => handleDeleteSubtask(subtask.id)}>
+                  <Trash2 className="w-4 h-4 text-red-500" />
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="flex items-center space-x-2 mt-2">
+            <input
+              type="text"
+              value={newSubtaskTitle}
+              onChange={e => setNewSubtaskTitle(e.target.value)}
+              placeholder="Uusi alitehtävä"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            />
+            <button
+              type="button"
+              onClick={handleAddSubtask}
+              className="p-2 bg-blue-100 text-blue-600 rounded-lg"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
 
           <div className="flex justify-between pt-4 border-t border-gray-200 mt-2">
               {selectedTask && (
