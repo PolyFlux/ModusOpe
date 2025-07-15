@@ -18,7 +18,7 @@ export default function WeekView() {
       if (scrollContainerRef.current) {
         scrollContainerRef.current.scrollTop = 7 * 48;
       }
-    }, 50);
+    }, 500);
 
     return () => clearTimeout(timer);
   }, [state.selectedDate, state.currentView, showWeekend]);
