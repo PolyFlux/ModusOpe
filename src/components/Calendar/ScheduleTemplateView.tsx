@@ -31,9 +31,10 @@ export default function ScheduleTemplateView() {
     const [startHour, startMinute] = template.startTime.split(':').map(Number);
     const [endHour, endMinute] = template.endTime.split(':').map(Number);
     
+    // Kellonaika alkaa klo 6:00, joten vähennetään se laskuista
     const startPosition = ((startHour - 6) * 60) + startMinute;
     const duration = ((endHour - startHour) * 60) + (endMinute - startMinute);
-    const hourRowHeight = 48;
+    const hourRowHeight = 48; // 48px per tunti
     
     return {
       top: (startPosition / 60) * hourRowHeight,
@@ -86,6 +87,7 @@ export default function ScheduleTemplateView() {
 
             {/* Grid Content Area (for lines and events) */}
             <div className="col-start-2 col-span-5 row-start-2 grid grid-cols-5">
+              {/* Map through days to create columns */}
               {weekDays.map((_, dayIndex) => (
                 <div key={dayIndex} className="relative border-l border-gray-200">
                   {/* Background time slots for this column */}
@@ -128,7 +130,7 @@ export default function ScheduleTemplateView() {
                             <div className="opacity-0 group-hover:opacity-100 transition-opacity">
                               <button
                                 onClick={(e) => {
-                                  e.stopPropagation();
+                                  e.stopPropagation(); // Estää muokkausikkunan avautumisen
                                   handleDeleteTemplate(template.id);
                                 }}
                                 className="p-1 text-gray-500 hover:text-red-600 transition-colors"
