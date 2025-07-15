@@ -3,6 +3,7 @@ import { X, BookOpen, FileText, Calendar, Plus, Trash2, File, Upload, ExternalLi
 import { useApp } from '../../contexts/AppContext';
 import { Project, Task } from '../../types';
 import GoogleDriveBrowser from '../GoogleDrive/GoogleDriveBrowser';
+import { GENERAL_TASKS_PROJECT_ID } from '../../contexts/AppContext'; // LISÄTTY
 
 export default function ProjectModal() {
   const { state, dispatch } = useApp();
@@ -12,7 +13,6 @@ export default function ProjectModal() {
     ? projects.find(p => p.id === selectedProjectId)
     : null;
 
-  // Haetaan kurssit projekteista pudotusvalikkoa varten
   const courses = projects.filter(p => p.type === 'course');
 
   const [activeTab, setActiveTab] = useState<'details' | 'files'>('details');
@@ -23,7 +23,7 @@ export default function ProjectModal() {
     color: '#3B82F6',
     startDate: '',
     endDate: '',
-    parentCourseId: '' // Lisätty kenttä
+    parentCourseId: ''
   });
 
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -54,7 +54,6 @@ export default function ProjectModal() {
       setTasks(selectedProject.tasks || []);
       setFiles(selectedProject.files || []);
     } else {
-      // Reset for new project
       setFormData({
         name: '',
         description: '',
@@ -213,7 +212,6 @@ export default function ProjectModal() {
           </button>
         </div>
 
-        {/* Tabs */}
         <div className="flex border-b border-gray-200 flex-shrink-0">
           <button
             onClick={() => setActiveTab('details')}
@@ -258,7 +256,6 @@ export default function ProjectModal() {
                   />
                 </div>
 
-                {/* ===== UUSI OSA: KURSSIIN LIITTÄMINEN ===== */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <BookOpen className="w-4 h-4 inline mr-2" />
@@ -277,7 +274,6 @@ export default function ProjectModal() {
                     ))}
                   </select>
                 </div>
-                {/* ======================================= */}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -356,7 +352,8 @@ export default function ProjectModal() {
                   </div>
                 </div>
                           <div className="flex justify-between pt-4">
-                              {selectedProject && (
+                              {/* KORJATTU: Piilotetaan poistonappi yleisiltä tehtäviltä */}
+                              {selectedProject && selectedProject.id !== GENERAL_TASKS_PROJECT_ID && (
                                   <button
                                       type="button"
                                       onClick={handleDelete}
