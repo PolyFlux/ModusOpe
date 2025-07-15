@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useLayoutEffect } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { formatDate, isToday, isSameDay, addDays } from '../../utils/dateUtils';
 import { Event } from '../../types';
@@ -10,14 +10,10 @@ export default function WeekView() {
   const { selectedDate, events } = state;
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  // KORJAUS: Vaihdettu useEffect -> useLayoutEffect
+  useLayoutEffect(() => {
     if (scrollContainerRef.current) {
-      // Varmistetaan, että selain on ehtinyt renderöidä näkymän ennen vieritystä
-      requestAnimationFrame(() => {
-        if (scrollContainerRef.current) {
-          scrollContainerRef.current.scrollTop = 7 * 48; // Vieritetään klo 7 kohdalle
-        }
-      });
+      scrollContainerRef.current.scrollTop = 7 * 48;
     }
   }, [state.selectedDate, state.currentView]);
   
