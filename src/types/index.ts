@@ -4,7 +4,7 @@ export interface KanbanColumn {
 }
 
 export interface Event {
-  id: string;
+  id:string;
   title: string;
   description?: string;
   date: Date;
@@ -62,6 +62,14 @@ export interface Task {
   dueDate?: Date;
   projectId: string;
   subtasks?: Subtask[];
+  files?: Array<{ // UUSI OSA
+    id: string;
+    name: string;
+    type: 'upload' | 'google-drive';
+    url?: string;
+    size?: number;
+    uploadDate: Date;
+  }>;
 }
 
 export interface ScheduleTemplate {
