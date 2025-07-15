@@ -52,10 +52,10 @@ function AppContent() {
           <h1 className="text-lg font-bold ml-4">ModusOpe</h1>
         </header>
 
-        <main className="flex-1 overflow-auto">
-          <div className="p-4 md:p-8">
-            {renderContent()}
-          </div>
+        {/* KORJAUS: Muutettu rakennetta, jotta sisäinen vieritys toimii oikein. */}
+        {/* Poistettu "overflow-auto" ja ympäröivä div, jotta kalenteri voi hallita omaa korkeuttaan */}
+        <main className="flex-1 flex flex-col min-h-0">
+          {renderContent()}
         </main>
       </div>
 
