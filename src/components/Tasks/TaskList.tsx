@@ -2,6 +2,7 @@ import React from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { CheckSquare, Circle, Calendar, AlertCircle, Plus } from 'lucide-react';
 import { formatDate } from '../../utils/dateUtils';
+import { Task } from '../../types'; // Varmistetaan, että Task-tyyppi on tuotu
 
 export default function TaskList() {
   const { state, dispatch } = useApp();
@@ -15,7 +16,17 @@ export default function TaskList() {
     }))
   );
 
-  const toggleTask = (projectId: string, taskId: string, completed: boolean) => {
+  const handleTaskClick = (task: Task) => {
+    // Etsitään alkuperäinen task-olio projekteista, jotta saadaan kaikki data mukaan
+    const originalProject = projects.find(p => p.id === task.projectId);
+    const originalTask = originalProject?.tasks.find(t => t.id === task.id);
+    if (originalTask) {
+      dispatch({ type: 'TOGGLE_TASK_MODAL', payload: originalTask });
+    }
+  };
+
+  const toggleTask = (e: React.MouseEvent, projectId: string, taskId: string, completed: boolean) => {
+    e.stopPropagation(); // Estää modaalin avaamisen, kun tehtävä merkitään valmiiksi
     const project = projects.find(p => p.id === projectId);
     const task = project?.tasks.find(t => t.id === taskId);
     
@@ -30,7 +41,8 @@ export default function TaskList() {
     }
   };
   
-    const toggleSubtask = (projectId: string, taskId: string, subtaskId: string, completed: boolean) => {
+  const toggleSubtask = (e: React.MouseEvent, projectId: string, taskId: string, subtaskId: string, completed: boolean) => {
+    e.stopPropagation(); // Estää modaalin avaamisen
     const project = projects.find(p => p.id === projectId);
     const task = project?.tasks.find(t => t.id === taskId);
 
@@ -46,7 +58,6 @@ export default function TaskList() {
       });
     }
   };
-
 
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
@@ -82,7 +93,7 @@ export default function TaskList() {
       </div>
 
       {/* Task Sections */}
-      <div className="space-y-8">
+      <div className="space-y-8 mt-8">
         {/* Pending Tasks */}
         {pendingTasks.length > 0 && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -93,11 +104,15 @@ export default function TaskList() {
             </div>
             <div className="divide-y divide-gray-200">
               {pendingTasks.map((task) => (
-                <div key={task.id} className="p-6 hover:bg-gray-50 transition-colors">
+                <div 
+                  key={task.id} 
+                  className="p-6 hover:bg-gray-50 transition-colors cursor-pointer"
+                  onClick={() => handleTaskClick(task as Task)}
+                >
                   <div className="flex items-start space-x-4">
                     <button
-                      onClick={() => toggleTask(task.projectId, task.id, true)}
-                      className="mt-1 text-gray-400 hover:text-blue-600 transition-colors"
+                      onClick={(e) => toggleTask(e, task.projectId, task.id, true)}
+                      className="mt-1 text-gray-400 hover:text-blue-600 transition-colors z-10 relative"
                     >
                       <Circle className="w-5 h-5" />
                     </button>
@@ -119,8 +134,8 @@ export default function TaskList() {
                               <input
                                 type="checkbox"
                                 checked={subtask.completed}
-                                onChange={() => toggleSubtask(task.projectId, task.id, subtask.id, !subtask.completed)}
-                                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                                onClick={(e) => toggleSubtask(e, task.projectId, task.id, subtask.id, !subtask.completed)}
+                                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 z-10 relative"
                               />
                               <span className={`text-sm ${subtask.completed ? 'line-through text-gray-500' : ''}`}>
                                 {subtask.title}
@@ -172,11 +187,15 @@ export default function TaskList() {
             </div>
             <div className="divide-y divide-gray-200">
               {completedTasks.map((task) => (
-                <div key={task.id} className="p-6 hover:bg-gray-50 transition-colors opacity-60">
+                <div 
+                  key={task.id} 
+                  className="p-6 hover:bg-gray-50 transition-colors opacity-60 cursor-pointer"
+                  onClick={() => handleTaskClick(task as Task)}
+                >
                   <div className="flex items-start space-x-4">
                     <button
-                      onClick={() => toggleTask(task.projectId, task.id, false)}
-                      className="mt-1 text-green-600 hover:text-gray-400 transition-colors"
+                      onClick={(e) => toggleTask(e, task.projectId, task.id, false)}
+                      className="mt-1 text-green-600 hover:text-gray-400 transition-colors z-10 relative"
                     >
                       <CheckSquare className="w-5 h-5" />
                     </button>
