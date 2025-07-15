@@ -125,15 +125,13 @@ const KanbanColumnComponent = ({ column, tasks, projectId }: { column: KanbanCol
           )}
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto -mr-2 pr-2 min-h-[300px]">
+      <div className="flex-1 overflow-y-auto -mr-2 pr-2 min-h-[300px] space-y-3">
         {tasks.map(task => (
           <TaskCard key={task.id} task={task} onClick={() => dispatch({ type: 'TOGGLE_TASK_MODAL', payload: task })} />
         ))}
-        {tasks.length === 0 && (
-          <div className="flex items-center justify-center h-full text-xs text-gray-400 p-4 border-2 border-dashed border-gray-300 rounded-lg">
-            Pudota tehtäviä tähän
-          </div>
-        )}
+        <div className={`flex items-center justify-center text-xs text-gray-400 p-4 border-2 border-dashed rounded-lg ${tasks.length > 0 ? 'border-gray-300' : 'border-gray-300 h-full'}`}>
+          Pudota tehtäviä tähän
+        </div>
       </div>
     </div>
   );
@@ -152,10 +150,6 @@ const AddColumn = ({ projectId }: { projectId: string }) => {
             setIsEditing(false);
         }
     };
-
-    if (projectId === GENERAL_TASKS_PROJECT_ID) {
-        return null;
-    }
 
     if (!isEditing) {
         return (
