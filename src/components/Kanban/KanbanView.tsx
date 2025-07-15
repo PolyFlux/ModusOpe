@@ -259,6 +259,17 @@ export default function KanbanView() {
     setDraggedOverColumn(null);
   };
 
+  const handleInfoButtonClick = () => {
+    if (selectedProject) {
+      if (selectedProject.type === 'course') {
+        dispatch({ type: 'TOGGLE_COURSE_MODAL', payload: { id: selectedProject.id } });
+      } else {
+        dispatch({ type: 'TOGGLE_PROJECT_MODAL', payload: selectedProject.id });
+      }
+    }
+  };
+
+
   return (
     <div className="flex flex-col md:flex-row h-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       <aside className="hidden md:block w-1/4 min-w-[250px] bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto">
@@ -291,9 +302,12 @@ export default function KanbanView() {
                 <ChevronDown className="w-5 h-5 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
               <h1 className="hidden md:block text-2xl font-bold text-gray-900">{selectedProject.name}</h1>
-              <button className="flex items-center text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md">
+              <button 
+                onClick={handleInfoButtonClick}
+                className="flex items-center text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md"
+              >
                 <Info className="w-4 h-4 mr-2" />
-                <span className="hidden md:inline">Tiedot</span>
+                <span className="hidden md:inline">Muokkaa tietoja</span>
               </button>
             </div>
             
