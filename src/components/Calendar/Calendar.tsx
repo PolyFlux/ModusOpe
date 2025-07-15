@@ -26,10 +26,10 @@ export default function Calendar() {
   };
 
   return (
+    // Tämä rakenne on nyt oikein, kun App.tsx on korjattu
     <div className="p-4 md:p-8 h-full flex flex-col">
       <CalendarHeader />
-      {/* KORJATTU: Poistettu 'overflow-hidden' */}
-      <div className="flex-1">
+      <div className="flex-1 min-h-0"> 
         {renderView()}
       </div>
     </div>
