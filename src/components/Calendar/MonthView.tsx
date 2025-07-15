@@ -2,6 +2,7 @@ import React from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { getDaysInMonth, isSameDay, isToday } from '../../utils/dateUtils';
 import { Event } from '../../types';
+import { GENERAL_TASKS_PROJECT_ID } from '../../contexts/AppContext';
 
 export default function MonthView() {
   const { state, dispatch } = useApp();
@@ -18,13 +19,13 @@ export default function MonthView() {
     dispatch({ type: 'SET_SELECTED_DATE', payload: date });
   };
 
-  // ==========================================================================================
-  // MUUTOS: Päivitetään klikkauksen käsittely
-  // ==========================================================================================
   const handleEventClick = (event: Event, e: React.MouseEvent) => {
     e.stopPropagation();
-    // Jos tapahtuma on määräaika, avataan projektimodaali. Muuten tapahtumamodaali.
+    // KORJATTU: Estetään modaalin avaus yleisille tehtäville
     if (event.type === 'deadline' && event.projectId) {
+        if (event.projectId === GENERAL_TASKS_PROJECT_ID) {
+            return; // Älä tee mitään, jos kyseessä on yleisten tehtävien projekti
+        }
       dispatch({ type: 'TOGGLE_PROJECT_MODAL', payload: event.projectId });
     } else {
       dispatch({ type: 'TOGGLE_EVENT_MODAL', payload: event });
