@@ -25,7 +25,7 @@ const TaskCard = ({ task, onClick }: { task: Task, onClick: () => void }) => {
         e.currentTarget.classList.add('opacity-50');
       }}
       onDragEnd={(e) => e.currentTarget.classList.remove('opacity-50')}
-      className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 mb-3 cursor-pointer active:cursor-grabbing"
+      className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 cursor-pointer active:cursor-grabbing"
     >
       <div className="flex justify-between items-start mb-2">
         <h4 className="font-semibold text-gray-800 text-sm">{task.title}</h4>
@@ -63,7 +63,15 @@ const KanbanColumnComponent = ({ column, tasks, projectId }: { column: KanbanCol
     }
   };
   
-    const onDrop = (e: React.DragEvent) => {
+  const handleAddTask = () => {
+    const newTaskTemplate: Partial<Task> = {
+      projectId: projectId,
+      columnId: column.id,
+    };
+    dispatch({ type: 'TOGGLE_TASK_MODAL', payload: newTaskTemplate as Task });
+  };
+
+  const onDrop = (e: React.DragEvent) => {
     const taskId = e.dataTransfer.getData('taskId');
     const sourceProjectId = e.dataTransfer.getData('projectId');
     dispatch({
@@ -79,7 +87,7 @@ const KanbanColumnComponent = ({ column, tasks, projectId }: { column: KanbanCol
         onDragOver={e => e.preventDefault()}
         onDrop={onDrop}
     >
-      <div className="flex justify-between items-center mb-4 px-1">
+      <div className="flex justify-between items-center mb-2 px-1">
         {isEditing ? (
           <input
             autoFocus
@@ -125,6 +133,19 @@ const KanbanColumnComponent = ({ column, tasks, projectId }: { column: KanbanCol
           )}
         </div>
       </div>
+      
+      {/* ===== LISÄTTY OSUUS ALKAA ===== */}
+      <div className="mb-3">
+        <button
+          onClick={handleAddTask}
+          className="w-full flex items-center justify-center p-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Lisää tehtävä
+        </button>
+      </div>
+      {/* ===== LISÄTTY OSUUS PÄÄTTYY ===== */}
+
       <div className="flex-1 overflow-y-auto -mr-2 pr-2 min-h-[300px] space-y-3">
         {tasks.map(task => (
           <TaskCard key={task.id} task={task} onClick={() => dispatch({ type: 'TOGGLE_TASK_MODAL', payload: task })} />
@@ -299,7 +320,6 @@ export default function KanbanView() {
                 <ChevronDown className="w-5 h-5 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
               <h1 className="hidden md:block text-2xl font-bold text-gray-900">{selectedProject.name}</h1>
-              {/* KORJATTU: Piilotetaan nappi yleisiltä tehtäviltä */}
               {selectedProject.id !== GENERAL_TASKS_PROJECT_ID && (
                 <button 
                   onClick={handleInfoButtonClick}
