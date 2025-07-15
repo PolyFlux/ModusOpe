@@ -6,7 +6,7 @@ import { formatDate } from '../../utils/dateUtils';
 import { GENERAL_TASKS_PROJECT_ID } from '../../contexts/AppContext';
 
 
-const TaskCard = ({ task }: { task: Task }) => {
+const TaskCard = ({ task, onClick }: { task: Task, onClick: () => void }) => {
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
       case 'high': return <AlertCircle className="w-4 h-4 text-red-500" />;
@@ -17,6 +17,7 @@ const TaskCard = ({ task }: { task: Task }) => {
 
   return (
     <div
+      onClick={onClick}
       draggable
       onDragStart={(e) => {
         e.dataTransfer.setData('taskId', task.id);
@@ -24,7 +25,7 @@ const TaskCard = ({ task }: { task: Task }) => {
         e.currentTarget.classList.add('opacity-50');
       }}
       onDragEnd={(e) => e.currentTarget.classList.remove('opacity-50')}
-      className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 mb-3 cursor-grab active:cursor-grabbing"
+      className="bg-white p-3 rounded-lg shadow-sm border border-gray-200 mb-3 cursor-pointer active:cursor-grabbing"
     >
       <div className="flex justify-between items-start mb-2">
         <h4 className="font-semibold text-gray-800 text-sm">{task.title}</h4>
@@ -126,7 +127,7 @@ const KanbanColumnComponent = ({ column, tasks, projectId }: { column: KanbanCol
       </div>
       <div className="flex-1 overflow-y-auto -mr-2 pr-2 min-h-[300px]">
         {tasks.map(task => (
-          <TaskCard key={task.id} task={task} />
+          <TaskCard key={task.id} task={task} onClick={() => dispatch({ type: 'TOGGLE_TASK_MODAL', payload: task })} />
         ))}
         {tasks.length === 0 && (
           <div className="flex items-center justify-center h-full text-xs text-gray-400 p-4 border-2 border-dashed border-gray-300 rounded-lg">
