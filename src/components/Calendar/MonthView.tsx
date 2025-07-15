@@ -15,16 +15,19 @@ export default function MonthView() {
     return events.filter(event => isSameDay(new Date(event.date), date));
   };
 
+  // ==========================================================================================
+  // MUUTOS: Päivän klikkaus siirtyy päivänäkymään
+  // ==========================================================================================
   const handleDateClick = (date: Date) => {
     dispatch({ type: 'SET_SELECTED_DATE', payload: date });
+    dispatch({ type: 'SET_VIEW', payload: 'day' });
   };
 
   const handleEventClick = (event: Event, e: React.MouseEvent) => {
     e.stopPropagation();
-    // KORJATTU: Estetään modaalin avaus yleisille tehtäville
     if (event.type === 'deadline' && event.projectId) {
         if (event.projectId === GENERAL_TASKS_PROJECT_ID) {
-            return; // Älä tee mitään, jos kyseessä on yleisten tehtävien projekti
+            return; 
         }
       dispatch({ type: 'TOGGLE_PROJECT_MODAL', payload: event.projectId });
     } else {
