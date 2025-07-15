@@ -1,6 +1,6 @@
 import { nanoid } from 'nanoid';
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
-import { Event, Project, Task, CalendarView, ScheduleTemplate, RecurringClass } from '../types';
+import { Event, Project, Task, CalendarView, ScheduleTemplate, RecurringClass, KanbanColumn } from '../types';
 
 function generateProjectDeadlineEvents(projects: Project[]): Event[] {
   return projects
@@ -84,7 +84,7 @@ type AppAction =
   | { type: 'TOGGLE_SIDEBAR' }
   | { type: 'TOGGLE_MOBILE_MENU' }
   | { type: 'SET_KANBAN_PROJECT'; payload: string | null }
-  | { type: 'UPDATE_TASK_STATUS'; payload: { projectId: string; taskId: string; newStatus: 'todo' | 'inProgress' | 'done' } }
+  | { type: 'UPDATE_TASK_STATUS'; payload: { projectId: string; taskId: string; newStatus: string } }
   | { type: 'ADD_COLUMN'; payload: { projectId: string; title: string } };
 
 const initialState: AppState = {
@@ -349,8 +349,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
             if (task.id === taskId) {
               return {
                 ...task,
-                status: newStatus,
-                completed: newStatus === 'done' // Merkitään valmiiksi vain, kun siirretään 'done'-sarakkeeseen
+                columnId: newStatus,
+                completed: newStatus === 'done'
               };
             }
             return task;
