@@ -45,3 +45,4 @@ const AddColumn = ({ projectId }: { projectId: string }) => {
     const { dispatch } = useApp();
     const [isEditing, setIsEditing] = useState(false);
     const
+}
