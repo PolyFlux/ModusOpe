@@ -165,7 +165,7 @@ export default function KanbanView() {
         {renderProjectList('Projektit', otherProjects, <ClipboardCheck className="w-4 h-4" />)}
       </aside>
 
-      <main className="flex-1 p-4 md:p-6 flex flex-col overflow-hidden">
+      <main className="flex-1 p-4 md:p-6 flex flex-col min-w-0">
         {selectedProject ? (
           <>
             <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6 flex-shrink-0">
