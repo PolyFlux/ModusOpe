@@ -106,7 +106,7 @@ const courseData: any = { // Käytetään 'any' väliaikaisesti, koska lisäämm
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Esim. Matematiikka 9A; FY7"
+                        placeholder="Esim. FY7"
                     />
                 </div>
 
@@ -146,14 +146,14 @@ const courseData: any = { // Käytetään 'any' väliaikaisesti, koska lisäämm
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         <FileText className="w-4 h-4 inline mr-2" />
-                        Lisätietoja
+                        Muistiinpanot
                     </label>
                     <textarea
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        rows={3}
-                        placeholder="Tarkemmat tiedot kurssista"
+                        rows={10}
+                        placeholder="Kirjoita kuvaus tai lisää muistiinpanoja"
                     />
                 </div>
 
