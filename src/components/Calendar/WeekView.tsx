@@ -10,12 +10,9 @@ export default function WeekView() {
   const { selectedDate, events } = state;
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // =======================================================================
-  // MUUTOS: Lisätty currentView riippuvuuksiin
-  // =======================================================================
   useEffect(() => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = 7 * 48; // Vierittää klo 7:00 kohdalle
+      scrollContainerRef.current.scrollTop = 7 * 48;
     }
   }, [state.selectedDate, state.currentView]);
   
