@@ -9,16 +9,15 @@ export default function DayView() {
   const { state, dispatch } = useApp();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // KORJAUS: Käytetään useLayoutEffectiä ja pientä viivettä setTimeoutilla.
-  // Tämä antaa selaimelle aikaa viimeistellä renderöinti ennen vieritystä.
+  // KORJAUS: Käytetään pientä 50ms viivettä varmistamaan, että renderöinti on valmis.
   useLayoutEffect(() => {
     const timer = setTimeout(() => {
       if (scrollContainerRef.current) {
         scrollContainerRef.current.scrollTop = 7 * 48; // Vieritys klo 7 kohdalle
       }
-    }, 0); // 0 millisekunnin viive siirtää suorituksen jonon loppuun.
+    }, 50); 
 
-    return () => clearTimeout(timer); // Siivotaan ajastin, kun komponentti poistuu
+    return () => clearTimeout(timer);
   }, [state.selectedDate, state.currentView]);
 
   const navigateDay = (direction: 'prev' | 'next') => {
