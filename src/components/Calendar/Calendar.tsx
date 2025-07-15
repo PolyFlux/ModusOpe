@@ -28,7 +28,8 @@ export default function Calendar() {
   return (
     <div className="p-4 md:p-8 h-full flex flex-col">
       <CalendarHeader />
-      <div className="flex-1 overflow-hidden">
+      {/* KORJATTU: Poistettu 'overflow-hidden' */}
+      <div className="flex-1">
         {renderView()}
       </div>
     </div>
