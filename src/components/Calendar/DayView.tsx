@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useLayoutEffect } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { formatDate, isSameDay, addDays } from '../../utils/dateUtils';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
@@ -9,14 +9,13 @@ export default function DayView() {
   const { state, dispatch } = useApp();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  // KORJAUS: Vaihdettu useEffect -> useLayoutEffect
+  // Tämä varmistaa, että vieritys tapahtuu heti DOM-päivityksen jälkeen,
+  // mutta ennen kuin selain piirtää näkymän.
+  useLayoutEffect(() => {
     if (scrollContainerRef.current) {
-      // Varmistetaan, että selain on ehtinyt renderöidä näkymän ennen vieritystä
-      requestAnimationFrame(() => {
-        if (scrollContainerRef.current) {
-            scrollContainerRef.current.scrollTop = 7 * 48; // Vieritetään klo 7 kohdalle (7 tuntia * 48px/tunti)
-        }
-      });
+      // Vieritetään oletuksena klo 7 kohdalle (7 tuntia * 48px/tunti)
+      scrollContainerRef.current.scrollTop = 7 * 48;
     }
   }, [state.selectedDate, state.currentView]);
 
