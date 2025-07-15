@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { Project, Task, KanbanColumn } from '../../types';
-import { BookOpen, ClipboardCheck, Info, AlertCircle, Calendar, ChevronDown, Plus } from 'lucide-react';
+import { BookOpen, ClipboardCheck, Info, AlertCircle, Calendar, ChevronDown, Plus, MoreHorizontal, Edit, Trash2, Lock } from 'lucide-react';
 import { formatDate } from '../../utils/dateUtils';
 
 
-// TaskCard-komponentti (pysyy ennallaan)
 const TaskCard = ({ task }: { task: Task }) => {
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
@@ -40,7 +39,89 @@ const TaskCard = ({ task }: { task: Task }) => {
   );
 };
 
-// UUSI KOMPONENTTI uuden sarakkeen lisäämistä varten
+const KanbanColumnComponent = ({ column, tasks, projectId }: { column: KanbanColumn, tasks: Task[], projectId: string }) => {
+  const { dispatch } = useApp();
+  const [isEditing, setIsEditing] = useState(false);
+  const [title, setTitle] = useState(column.title);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const isDefaultColumn = ['todo', 'inProgress', 'done'].includes(column.id);
+
+  const handleUpdate = () => {
+    if (title.trim()) {
+      dispatch({ type: 'UPDATE_COLUMN', payload: { projectId, column: { ...column, title } } });
+      setIsEditing(false);
+    }
+  };
+
+  const handleDelete = () => {
+    if (confirm(`Haluatko varmasti poistaa säiliön "${column.title}"? Tämä poistaa myös kaikki sen sisältämät tehtävät.`)) {
+      dispatch({ type: 'DELETE_COLUMN', payload: { projectId, columnId: column.id } });
+    }
+  };
+
+  return (
+    <div className={`p-3 flex flex-col w-80 flex-shrink-0`}>
+      <div className="flex justify-between items-center mb-4 px-1">
+        {isEditing ? (
+          <input
+            autoFocus
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            onBlur={handleUpdate}
+            onKeyDown={(e) => e.key === 'Enter' && handleUpdate()}
+            className="font-semibold text-gray-800 bg-white border border-blue-400 rounded px-1 -ml-1 w-full"
+          />
+        ) : (
+          <h3 className="font-semibold text-gray-800">{column.title}</h3>
+        )}
+
+        <div className="relative">
+          <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-1 text-gray-500 hover:bg-gray-200 rounded">
+            <MoreHorizontal className="w-4 h-4" />
+          </button>
+          {isMenuOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+              <ul className="py-1">
+                <li>
+                  <button
+                    onClick={() => { setIsEditing(true); setIsMenuOpen(false); }}
+                    disabled={isDefaultColumn}
+                    className="w-full text-left flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isDefaultColumn ? <Lock className="w-3 h-3 mr-2" /> : <Edit className="w-3 h-3 mr-2" />}
+                    Muokkaa
+                  </button>
+                </li>
+                <li>
+                  <button
+                    onClick={handleDelete}
+                    disabled={isDefaultColumn}
+                    className="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isDefaultColumn ? <Lock className="w-3 h-3 mr-2" /> : <Trash2 className="w-3 h-3 mr-2" />}
+                    Poista
+                  </button>
+                </li>
+              </ul>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="flex-1 overflow-y-auto -mr-2 pr-2 min-h-[300px]">
+        {tasks.map(task => (
+          <TaskCard key={task.id} task={task} />
+        ))}
+        {tasks.length === 0 && (
+          <div className="flex items-center justify-center h-full text-xs text-gray-400 p-4 border-2 border-dashed border-gray-300 rounded-lg">
+            Pudota tehtäviä tähän
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const AddColumn = ({ projectId }: { projectId: string }) => {
     const { dispatch } = useApp();
     const [isEditing, setIsEditing] = useState(false);
@@ -57,13 +138,15 @@ const AddColumn = ({ projectId }: { projectId: string }) => {
 
     if (!isEditing) {
         return (
-            <button
-                onClick={() => setIsEditing(true)}
-                className="w-80 flex-shrink-0 flex items-center justify-center p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:bg-gray-100 hover:border-gray-400 transition-colors"
-            >
-                <Plus className="w-4 h-4 mr-2" />
-                Lisää uusi säiliö
-            </button>
+            <div className="w-80 flex-shrink-0 p-3">
+              <button
+                  onClick={() => setIsEditing(true)}
+                  className="w-full h-full flex items-center justify-center p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:bg-gray-100 hover:border-gray-400 transition-colors"
+              >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Lisää uusi säiliö
+              </button>
+            </div>
         );
     }
 
@@ -131,7 +214,6 @@ export default function KanbanView() {
     </div>
   );
 
-  // MUUTETTU: Käyttää nyt columnId:tä ja hanskaa vanhat tehtävät
   const getTasksForColumn = (columnId: string) => {
     if (!selectedProject) return [];
     if (columnId === 'todo') {
@@ -143,7 +225,6 @@ export default function KanbanView() {
   const handleDrop = (e: React.DragEvent, columnId: string) => {
     e.preventDefault();
     const taskId = e.dataTransfer.getData('taskId');
-    // MUUTETTU: newStatus -> columnId
     if (taskId && selectedKanbanProjectId) {
       dispatch({
         type: 'UPDATE_TASK_STATUS',
@@ -192,31 +273,24 @@ export default function KanbanView() {
             </div>
             
             <div className="flex-1 flex gap-6 overflow-x-auto">
-              {/* MUUTETTU: Haetaan sarakkeet projektilta */}
               {selectedProject.columns?.map(column => (
                 <div
                   key={column.id}
                   onDrop={(e) => handleDrop(e, column.id)}
                   onDragOver={(e) => { e.preventDefault(); setDraggedOverColumn(column.id); }}
                   onDragLeave={() => setDraggedOverColumn(null)}
-                  className={`p-3 flex flex-col w-80 flex-shrink-0 transition-colors ${
+                  // Lisätään sininen korostus raahauksen aikana
+                  className={`rounded-lg transition-colors ${
                     draggedOverColumn === column.id ? 'bg-blue-50' : ''
                   }`}
                 >
-                  <h3 className="font-semibold text-gray-800 mb-4 px-1">{column.title}</h3>
-                  <div className="flex-1 overflow-y-auto -mr-2 pr-2 min-h-[300px]">
-                    {getTasksForColumn(column.id).map(task => (
-                      <TaskCard key={task.id} task={task} />
-                    ))}
-                    {getTasksForColumn(column.id).length === 0 && (
-                      <div className="flex items-center justify-center h-full text-xs text-gray-400 p-4 border-2 border-dashed border-gray-300 rounded-lg">
-                        Pudota tehtäviä tähän
-                      </div>
-                    )}
-                  </div>
+                  <KanbanColumnComponent 
+                    column={column} 
+                    tasks={getTasksForColumn(column.id)}
+                    projectId={selectedProject.id}
+                  />
                 </div>
               ))}
-              {/* LISÄTTY: Uuden sarakkeen lisäys */}
               <AddColumn projectId={selectedProject.id} />
             </div>
           </>
