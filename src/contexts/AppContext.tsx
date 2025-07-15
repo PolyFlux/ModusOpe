@@ -29,7 +29,26 @@ function generateTaskDeadlineEvents(projects: Project[]): Event[] {
         }));
 }
 
-const initialProjects: Project[] = [];
+// --- LISÄTTY OSUUS: Yleisten tehtävien projekti ---
+export const GENERAL_TASKS_PROJECT_ID = 'general_tasks_project';
+
+const generalTasksProject: Project = {
+  id: GENERAL_TASKS_PROJECT_ID,
+  name: 'Yleiset tehtävät',
+  description: 'Tänne kerätään kaikki tehtävät, joita ei ole liitetty mihinkään tiettyyn projektiin.',
+  type: 'none',
+  color: '#6B7280', // Harmaa
+  startDate: new Date(),
+  tasks: [],
+  columns: [
+    { id: 'todo', title: 'Suunnitteilla' },
+    { id: 'inProgress', title: 'Työn alla' },
+    { id: 'done', title: 'Valmis' },
+  ],
+};
+// ---------------------------------------------------
+
+const initialProjects: Project[] = [generalTasksProject];
 const initialEvents: Event[] = [];
 
 interface AppState {
@@ -248,8 +267,13 @@ function appReducer(state: AppState, action: AppAction): AppState {
     }
 
     case 'ADD_TASK': {
+        const { projectId, task } = action.payload;
+        // --- MUUTETTU OSUUS: Asetetaan oletusprojekti, jos sitä ei ole valittu ---
+        const targetProjectId = projectId || GENERAL_TASKS_PROJECT_ID;
         const newProjects = state.projects.map(project =>
-            project.id === action.payload.projectId ? { ...project, tasks: [...project.tasks, action.payload.task] } : project
+            project.id === targetProjectId 
+            ? { ...project, tasks: [...project.tasks, {...task, projectId: targetProjectId}] } 
+            : project
         );
         return { ...state, projects: newProjects, events: updateAllEvents(state, newProjects) };
     }
