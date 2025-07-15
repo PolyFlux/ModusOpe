@@ -9,11 +9,14 @@ export default function DayView() {
   const { state, dispatch } = useApp();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  // =======================================================================
+  // MUUTOS: Lisätty currentView riippuvuuksiin
+  // =======================================================================
   useEffect(() => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = 7 * 48;
+      scrollContainerRef.current.scrollTop = 7 * 48; // Vierittää klo 7:00 kohdalle
     }
-  }, [state.selectedDate]);
+  }, [state.selectedDate, state.currentView]);
 
   const navigateDay = (direction: 'prev' | 'next') => {
     const newDate = addDays(selectedDate, direction === 'next' ? 1 : -1);
@@ -32,7 +35,6 @@ export default function DayView() {
     isSameDay(new Date(event.date), selectedDate)
   );
   
-  // Erotellaan koko päivän ja ajastetut tapahtumat
   const allDayEvents = dayEvents.filter(e => !e.startTime);
   const timedEvents = dayEvents.filter(e => !!e.startTime);
 
@@ -55,7 +57,6 @@ export default function DayView() {
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col h-full">
-      {/* Day header */}
       <div className="p-6 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center space-x-2">
           <button onClick={() => navigateDay('prev')} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
@@ -82,9 +83,6 @@ export default function DayView() {
         </p>
       </div>
 
-      {/* ======================================================================= */}
-      {/* LUKITTU KOKO PÄIVÄN TAPAHTUMAT -OSIO */}
-      {/* ======================================================================= */}
       <div className="sticky top-0 bg-white z-10 border-b border-gray-200 flex-shrink-0">
          <div className="flex">
             <div className="w-20 py-1 px-2 text-xs text-gray-500 text-right flex items-center justify-end">koko pv</div>
@@ -104,10 +102,8 @@ export default function DayView() {
       </div>
 
 
-      {/* Day timeline */}
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
         <div className="flex">
-          {/* Time column */}
           <div className="w-20 py-2">
             {timeSlots.map((time) => (
               <div key={time} className="h-12 text-xs text-gray-500 pr-2 text-right flex items-start">
@@ -116,9 +112,7 @@ export default function DayView() {
             ))}
           </div>
 
-          {/* Events column */}
           <div className="flex-1 border-l border-gray-200 relative">
-            {/* Hour lines */}
             {timeSlots.map((time) => (
               <div
                 key={time}
@@ -126,7 +120,6 @@ export default function DayView() {
               />
             ))}
 
-            {/* Timed Events */}
             {timedEvents.map((event) => {
               const eventDate = new Date(event.date);
               const startHour = eventDate.getHours();
@@ -134,7 +127,7 @@ export default function DayView() {
               
               const top = (startHour * 48) + (startMinute * 48 / 60);
               
-              let height = 48; // 1 hour default
+              let height = 48;
               if (event.endTime && event.startTime) {
                 const [endHour, endMinute] = event.endTime.split(':').map(Number);
                 const [startHourTime, startMinuteTime] = event.startTime.split(':').map(Number) || [startHour, startMinute];
