@@ -12,7 +12,12 @@ export default function WeekView() {
 
   useEffect(() => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = 7 * 48;
+      // Varmistetaan, että selain on ehtinyt renderöidä näkymän ennen vieritystä
+      requestAnimationFrame(() => {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop = 7 * 48; // Vieritetään klo 7 kohdalle
+        }
+      });
     }
   }, [state.selectedDate, state.currentView]);
   
