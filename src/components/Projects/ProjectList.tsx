@@ -2,17 +2,20 @@ import React from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { BookOpen, Calendar, CheckSquare, ClipboardCheck, Plus } from 'lucide-react';
 import { formatDate } from '../../utils/dateUtils';
+import { GENERAL_TASKS_PROJECT_ID } from '../../contexts/AppContext';
 
 export default function ProjectList() {
   const { state, dispatch } = useApp();
-  const projects = state.projects.filter(p => p.type !== 'course');
+  
+  // Suodatetaan pois kurssit ja yleiset tehtävät
+  const projects = state.projects.filter(p => p.type !== 'course' && p.id !== GENERAL_TASKS_PROJECT_ID);
 
   const handleProjectClick = (projectId: string) => {
     dispatch({ type: 'TOGGLE_PROJECT_MODAL', payload: projectId });
   };
 
   const getTaskStats = (projectId: string) => {
-    const project = projects.find(p => p.id === projectId);
+    const project = state.projects.find(p => p.id === projectId);
     if (!project) return { completed: 0, total: 0 };
     
     const completed = project.tasks.filter(task => task.completed).length;
