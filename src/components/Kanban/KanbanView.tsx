@@ -59,7 +59,7 @@ const AddColumn = ({ projectId }: { projectId: string }) => {
         return (
             <button
                 onClick={() => setIsEditing(true)}
-                className="w-80 flex-shrink-0 flex items-center justify-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 transition-colors"
+                className="w-80 flex-shrink-0 flex items-center justify-center p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:bg-gray-100 hover:border-gray-400 transition-colors"
             >
                 <Plus className="w-4 h-4 mr-2" />
                 Lisää uusi säiliö
@@ -199,12 +199,12 @@ export default function KanbanView() {
                   onDrop={(e) => handleDrop(e, column.id)}
                   onDragOver={(e) => { e.preventDefault(); setDraggedOverColumn(column.id); }}
                   onDragLeave={() => setDraggedOverColumn(null)}
-                  className={`bg-gray-100 rounded-lg p-3 flex flex-col w-80 flex-shrink-0 transition-colors ${
+                  className={`p-3 flex flex-col w-80 flex-shrink-0 transition-colors ${
                     draggedOverColumn === column.id ? 'bg-blue-50' : ''
                   }`}
                 >
                   <h3 className="font-semibold text-gray-800 mb-4 px-1">{column.title}</h3>
-                  <div className="flex-1 overflow-y-auto -mr-2 pr-2 min-h-[600px]">
+                  <div className="flex-1 overflow-y-auto -mr-2 pr-2">
                     {getTasksForColumn(column.id).map(task => (
                       <TaskCard key={task.id} task={task} />
                     ))}
