@@ -31,17 +31,16 @@ export default function TaskModal() {
         subtasks: selectedTask.subtasks || [],
       });
     } else {
-      const defaultProjectId = projects.length > 0 ? projects[0].id : '';
       setFormData({
         title: '',
         description: '',
         priority: 'medium',
         dueDate: '',
-        projectId: defaultProjectId,
+        projectId: '', // Oletuksena ei projektia
         subtasks: [],
       });
     }
-  }, [selectedTask, showTaskModal, projects]);
+  }, [selectedTask, showTaskModal]);
 
   const handleSubtaskChange = (subtaskId: string, completed: boolean) => {
     setFormData(prev => ({
@@ -76,10 +75,6 @@ export default function TaskModal() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.projectId) {
-        alert("Valitse projekti!");
-        return;
-    }
 
     const taskData: Task = {
       id: selectedTask?.id || Date.now().toString(),
@@ -89,7 +84,7 @@ export default function TaskModal() {
       columnId: selectedTask?.columnId || 'todo',
       priority: formData.priority,
       dueDate: formData.dueDate ? new Date(formData.dueDate) : undefined,
-      projectId: formData.projectId,
+      projectId: formData.projectId, // Voi olla tyhjä, reducer hoitaa loput
       subtasks: formData.subtasks
     };
 
@@ -130,15 +125,14 @@ export default function TaskModal() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <Bookmark className="w-4 h-4 inline mr-2" />
-              Projekti
+              Projekti (valinnainen)
             </label>
             <select
-              required
               value={formData.projectId}
               onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="" disabled>Valitse projekti</option>
+              <option value="">Ei projektia</option>
               {projects.map(project => (
                 <option key={project.id} value={project.id}>
                   {project.name}
