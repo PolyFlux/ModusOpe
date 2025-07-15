@@ -3,6 +3,7 @@ import { useApp } from '../../contexts/AppContext';
 import { formatDate, isToday, isSameDay, addDays } from '../../utils/dateUtils';
 import { Event } from '../../types';
 import { Eye, EyeOff, ChevronLeft, ChevronRight } from 'lucide-react';
+import { GENERAL_TASKS_PROJECT_ID } from '../../contexts/AppContext'; 
 
 export default function WeekView() {
   const { state, dispatch } = useApp();
@@ -11,7 +12,6 @@ export default function WeekView() {
 
   useEffect(() => {
     if (scrollContainerRef.current) {
-      // Vieritetään näkymä klo 7:00 kohdalle.
       scrollContainerRef.current.scrollTop = 7 * 48;
     }
   }, [state.selectedDate]);
@@ -41,7 +41,11 @@ export default function WeekView() {
   };
 
   const handleEventClick = (event: Event) => {
+    // KORJATTU: Estetään modaalin avaus yleisille tehtäville
     if (event.type === 'deadline' && event.projectId) {
+      if (event.projectId === GENERAL_TASKS_PROJECT_ID) {
+        return; 
+      }
       dispatch({ type: 'TOGGLE_PROJECT_MODAL', payload: event.projectId });
     } else {
       dispatch({ type: 'TOGGLE_EVENT_MODAL', payload: event });
@@ -72,7 +76,6 @@ export default function WeekView() {
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-      {/* Viikon navigointi ja kontrollit (ennallaan) */}
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
@@ -88,7 +91,6 @@ export default function WeekView() {
       </div>
 
       <div ref={scrollContainerRef} className="max-h-[600px] overflow-y-auto">
-        {/* Otsikkorivi päiville (ennallaan) */}
         <div className="grid sticky top-0 bg-white z-20 border-b border-gray-200" style={{ gridTemplateColumns: gridColumns }}>
           <div className="py-4 px-2 text-center"></div>
           {displayDates.map((date, index) => (
@@ -99,9 +101,6 @@ export default function WeekView() {
           ))}
         </div>
 
-        {/* ========================================================================================== */}
-        {/* KOKOPÄIVÄN TAPAHTUMAT (MÄÄRÄAJAT) */}
-        {/* ========================================================================================== */}
         <div className="grid border-b border-gray-200" style={{ gridTemplateColumns: gridColumns }}>
             <div className="py-1 px-2 text-xs text-gray-500 text-right">koko pv</div>
             {displayDates.map((date, index) => {
@@ -123,17 +122,13 @@ export default function WeekView() {
             })}
         </div>
 
-        {/* Ajastetut tapahtumat (logiikka päivitetty) */}
         <div className="relative">
-            {/* Aikajana ja ruudukko */}
             <div className="grid" style={{ gridTemplateColumns: gridColumns }}>
-                {/* Kellonajat */}
                 <div className="col-start-1">
                     {timeSlots.map((time) => (
                         <div key={time} className="h-12 text-xs text-gray-500 pr-2 text-right flex items-start">{time}</div>
                     ))}
                 </div>
-                {/* Ruudukon viivat */}
                 <div className="col-start-2 col-span-full grid" style={{ gridTemplateColumns: `repeat(${displayDates.length}, 1fr)` }}>
                     {displayDates.map((_, dateIndex) => (
                          <div key={dateIndex} className="border-l border-gray-200">
@@ -144,7 +139,6 @@ export default function WeekView() {
                     ))}
                 </div>
             </div>
-            {/* Tapahtumien renderöinti ruudukon päälle */}
             <div className="absolute top-0 left-0 w-full h-full grid" style={{ gridTemplateColumns: gridColumns }}>
                 <div className="col-start-1"></div>
                  {displayDates.map((date, dateIndex) => {
@@ -157,7 +151,7 @@ export default function WeekView() {
                                 const startMinute = eventDate.getMinutes();
                                 const top = (startHour * 48) + (startMinute * 48 / 60);
 
-                                let height = 48; // Oletuskorkeus 1 tunti
+                                let height = 48; 
                                 if (event.endTime && event.startTime) {
                                     const [endHour, endMinute] = event.endTime.split(':').map(Number);
                                     const [startHourTime, startMinuteTime] = event.startTime.split(':').map(Number);
