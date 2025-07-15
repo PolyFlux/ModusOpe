@@ -3,6 +3,7 @@ import { useApp } from '../../contexts/AppContext';
 import { formatDate, isSameDay, addDays } from '../../utils/dateUtils';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { Event } from '../../types';
+import { GENERAL_TASKS_PROJECT_ID } from '../../contexts/AppContext'; // LISÄTTY
 
 export default function DayView() {
   const { state, dispatch } = useApp();
@@ -10,10 +11,9 @@ export default function DayView() {
 
   useEffect(() => {
     if (scrollContainerRef.current) {
-      // Vieritetään näkymä klo 7:00 kohdalle. Yksi tunti on 48px.
       scrollContainerRef.current.scrollTop = 7 * 48;
     }
-  }, [state.selectedDate]); // Vieritys suoritetaan, kun päivämäärä vaihtuu
+  }, [state.selectedDate]);
 
   const navigateDay = (direction: 'prev' | 'next') => {
     const newDate = addDays(selectedDate, direction === 'next' ? 1 : -1);
@@ -22,7 +22,6 @@ export default function DayView() {
 
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDate = new Date(e.target.value);
-    // Korjaa aikavyöhykkeen aiheuttama virhe
     const timezoneOffset = newDate.getTimezoneOffset() * 60000;
     const adjustedDate = new Date(newDate.getTime() + timezoneOffset);
     dispatch({ type: 'SET_SELECTED_DATE', payload: adjustedDate });
@@ -34,7 +33,15 @@ export default function DayView() {
   );
 
   const handleEventClick = (event: Event) => {
-    dispatch({ type: 'TOGGLE_EVENT_MODAL', payload: event });
+    // KORJATTU: Estetään modaalin avaus yleisille tehtäville
+    if (event.type === 'deadline' && event.projectId) {
+      if (event.projectId === GENERAL_TASKS_PROJECT_ID) {
+          return;
+      }
+      dispatch({ type: 'TOGGLE_PROJECT_MODAL', payload: event.projectId });
+    } else {
+      dispatch({ type: 'TOGGLE_EVENT_MODAL', payload: event });
+    }
   };
 
   const timeSlots = Array.from({ length: 24 }, (_, i) => {
@@ -44,7 +51,6 @@ export default function DayView() {
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-      {/* Day header */}
       <div className="p-6 border-b border-gray-200 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <button onClick={() => navigateDay('prev')} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
@@ -71,10 +77,8 @@ export default function DayView() {
         </p>
       </div>
 
-      {/* Day timeline */}
       <div ref={scrollContainerRef} className="max-h-[600px] overflow-y-auto">
         <div className="flex">
-          {/* Time column */}
           <div className="w-20 py-2">
             {timeSlots.map((time) => (
               <div key={time} className="h-12 text-xs text-gray-500 pr-2 text-right flex items-start">
@@ -83,9 +87,7 @@ export default function DayView() {
             ))}
           </div>
 
-          {/* Events column */}
           <div className="flex-1 border-l border-gray-200 relative">
-            {/* Hour lines */}
             {timeSlots.map((time) => (
               <div
                 key={time}
@@ -93,7 +95,6 @@ export default function DayView() {
               />
             ))}
 
-            {/* Events */}
             {dayEvents.map((event) => {
               const eventDate = new Date(event.date);
               const startHour = eventDate.getHours();
@@ -101,7 +102,7 @@ export default function DayView() {
               
               const top = (startHour * 48) + (startMinute * 48 / 60);
               
-              let height = 48; // 1 hour default
+              let height = 48; 
               if (event.endTime && event.startTime) {
                 const [endHour, endMinute] = event.endTime.split(':').map(Number);
                 const [startHourTime, startMinuteTime] = event.startTime.split(':').map(Number) || [startHour, startMinute];
