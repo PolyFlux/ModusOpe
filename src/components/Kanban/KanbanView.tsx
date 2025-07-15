@@ -152,6 +152,10 @@ const AddColumn = ({ projectId }: { projectId: string }) => {
         }
     };
 
+    if (projectId === GENERAL_TASKS_PROJECT_ID) {
+        return null;
+    }
+
     if (!isEditing) {
         return (
             <div className="w-80 flex-shrink-0 p-3">
@@ -195,7 +199,6 @@ export default function KanbanView() {
 
   useEffect(() => {
     if (!selectedKanbanProjectId && projects.length > 0) {
-      // Oletuksena valitaan yleiset tehtävät, jos olemassa. Muuten ensimmäinen projekti.
       const defaultProject = generalProject ? generalProject.id : projects[0].id;
       dispatch({ type: 'SET_KANBAN_PROJECT', payload: defaultProject });
     }
@@ -235,7 +238,6 @@ export default function KanbanView() {
 
   const getTasksForColumn = (columnId: string) => {
     if (!selectedProject) return [];
-    // Oletussäiliö "Suunnitteilla" näyttää myös ne tehtävät, joilla ei ole vielä saraketta
     if (columnId === 'todo') {
       return selectedProject.tasks.filter(t => t.columnId === 'todo' || !t.columnId);
     }
@@ -260,7 +262,7 @@ export default function KanbanView() {
   };
 
   const handleInfoButtonClick = () => {
-    if (selectedProject) {
+    if (selectedProject && selectedProject.id !== GENERAL_TASKS_PROJECT_ID) {
       if (selectedProject.type === 'course') {
         dispatch({ type: 'TOGGLE_COURSE_MODAL', payload: { id: selectedProject.id } });
       } else {
@@ -302,13 +304,16 @@ export default function KanbanView() {
                 <ChevronDown className="w-5 h-5 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
               </div>
               <h1 className="hidden md:block text-2xl font-bold text-gray-900">{selectedProject.name}</h1>
-              <button 
-                onClick={handleInfoButtonClick}
-                className="flex items-center text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md"
-              >
-                <Info className="w-4 h-4 mr-2" />
-                <span className="hidden md:inline">Muokkaa tietoja</span>
-              </button>
+              {/* KORJATTU: Piilotetaan nappi yleisiltä tehtäviltä */}
+              {selectedProject.id !== GENERAL_TASKS_PROJECT_ID && (
+                <button 
+                  onClick={handleInfoButtonClick}
+                  className="flex items-center text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md"
+                >
+                  <Info className="w-4 h-4 mr-2" />
+                  <span className="hidden md:inline">Muokkaa tietoja</span>
+                </button>
+              )}
             </div>
             
             <div className="flex-1 flex gap-6 overflow-x-auto">
@@ -318,7 +323,6 @@ export default function KanbanView() {
                   onDrop={(e) => handleDrop(e, column.id)}
                   onDragOver={(e) => { e.preventDefault(); setDraggedOverColumn(column.id); }}
                   onDragLeave={() => setDraggedOverColumn(null)}
-                  // Lisätään sininen korostus raahauksen aikana
                   className={`rounded-lg transition-colors ${
                     draggedOverColumn === column.id ? 'bg-blue-50' : ''
                   }`}
