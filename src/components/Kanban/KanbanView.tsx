@@ -316,9 +316,7 @@ export default function KanbanView() {
                   />
                 </div>
               ))}
-              {selectedProject.id !== GENERAL_TASKS_PROJECT_ID && (
-                 <AddColumn projectId={selectedProject.id} />
-              )}
+              <AddColumn projectId={selectedProject.id} />
             </div>
           </>
         ) : (
