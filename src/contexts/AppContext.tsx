@@ -399,7 +399,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'TOGGLE_PROJECT_MODAL':
       return { ...state, showProjectModal: !state.showProjectModal, selectedProjectId: action.payload };
 
-      case 'TOGGLE_COURSE_MODAL':
+    case 'TOGGLE_COURSE_MODAL':
       return { ...state, showCourseModal: !state.showCourseModal, courseModalInfo: action.payload };
     
     case 'TOGGLE_SCHEDULE_TEMPLATE_MODAL':
