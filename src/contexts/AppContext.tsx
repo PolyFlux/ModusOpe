@@ -222,7 +222,14 @@ function appReducer(state: AppState, action: AppAction): AppState {
     }
       
     case 'UPDATE_PROJECT': {
-      const newProjects = state.projects.map(p => p.id === action.payload.id ? action.payload : p);
+      const newProjects = state.projects.map(p => {
+        if (p.id === action.payload.id) {
+          // Yhdistetään olemassa oleva projekti päivitysdataan,
+          // jotta `tasks` ja `columns` säilyvät.
+          return { ...p, ...action.payload };
+        }
+        return p;
+      });
       return { ...state, projects: newProjects, events: updateAllEvents(state, newProjects) };
     }
       
