@@ -10,12 +10,16 @@ export default function WeekView() {
   const { selectedDate, events } = state;
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // KORJAUS: Vaihdettu useEffect -> useLayoutEffect
+  // KORJAUS: Käytetään useLayoutEffectiä ja pientä viivettä setTimeoutilla.
   useLayoutEffect(() => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = 7 * 48;
-    }
-  }, [state.selectedDate, state.currentView]);
+    const timer = setTimeout(() => {
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTop = 7 * 48; // Vieritys klo 7 kohdalle
+      }
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [state.selectedDate, state.currentView, showWeekend]); // Lisätty showWeekend riippuvuuksiin
   
   const [showWeekend, setShowWeekend] = useState(false);
 
