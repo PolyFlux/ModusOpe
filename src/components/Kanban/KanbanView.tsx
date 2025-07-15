@@ -44,5 +44,188 @@ const TaskCard = ({ task }: { task: Task }) => {
 const AddColumn = ({ projectId }: { projectId: string }) => {
     const { dispatch } = useApp();
     const [isEditing, setIsEditing] = useState(false);
-    const
+    const [title, setTitle] = useState('');
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (title.trim()) {
+            dispatch({ type: 'ADD_COLUMN', payload: { projectId, title } });
+            setTitle('');
+            setIsEditing(false);
+        }
+    };
+
+    if (!isEditing) {
+        return (
+            <button
+                onClick={() => setIsEditing(true)}
+                className="w-80 flex-shrink-0 flex items-center justify-center p-3 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 transition-colors"
+            >
+                <Plus className="w-4 h-4 mr-2" />
+                Lisää uusi säiliö
+            </button>
+        );
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="w-80 flex-shrink-0 p-3 bg-gray-100 rounded-lg">
+            <input
+                autoFocus
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Säiliön nimi..."
+                className="w-full p-2 border border-gray-300 rounded-md"
+            />
+            <div className="mt-2 space-x-2">
+                <button type="submit" className="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700">Lisää</button>
+                <button type="button" onClick={() => setIsEditing(false)} className="px-3 py-1 text-sm rounded hover:bg-gray-200">Peruuta</button>
+            </div>
+        </form>
+    );
+};
+
+
+export default function KanbanView() {
+  const { state, dispatch } = useApp();
+  const { projects, selectedKanbanProjectId } = state;
+  const [draggedOverColumn, setDraggedOverColumn] = useState<string | null>(null);
+
+  const courses = projects.filter(p => p.type === 'course');
+  const otherProjects = projects.filter(p => p.type !== 'course');
+
+  useEffect(() => {
+    if (!selectedKanbanProjectId && projects.length > 0) {
+      dispatch({ type: 'SET_KANBAN_PROJECT', payload: projects[0].id });
+    }
+  }, [projects, selectedKanbanProjectId, dispatch]);
+
+  const selectedProject = projects.find(p => p.id === selectedKanbanProjectId);
+
+  const handleSelectProject = (projectId: string) => {
+    dispatch({ type: 'SET_KANBAN_PROJECT', payload: projectId });
+  };
+  
+  const renderProjectList = (title: string, items: Project[], icon: React.ReactNode) => (
+    <div>
+      <h3 className="text-sm font-semibold text-gray-500 uppercase px-4 mt-6 mb-2 flex items-center">
+        {icon}
+        <span className="ml-2">{title}</span>
+      </h3>
+      <ul className="space-y-1">
+        {items.map(item => (
+          <li key={item.id}>
+            <button
+              onClick={() => handleSelectProject(item.id)}
+              className={`w-full text-left px-4 py-2 text-sm rounded-md transition-colors flex items-center ${
+                selectedKanbanProjectId === item.id
+                  ? 'bg-blue-100 text-blue-800 font-semibold'
+                  : 'text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              <span className="w-2 h-2 rounded-full mr-3" style={{ backgroundColor: item.color }}></span>
+              {item.name}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+
+  // MUUTETTU: Käyttää nyt columnId:tä ja hanskaa vanhat tehtävät
+  const getTasksForColumn = (columnId: string) => {
+    if (!selectedProject) return [];
+    if (columnId === 'todo') {
+      return selectedProject.tasks.filter(t => t.columnId === 'todo' || !t.columnId);
+    }
+    return selectedProject.tasks.filter(t => t.columnId === columnId);
+  };
+
+  const handleDrop = (e: React.DragEvent, columnId: string) => {
+    e.preventDefault();
+    const taskId = e.dataTransfer.getData('taskId');
+    // MUUTETTU: newStatus -> columnId
+    if (taskId && selectedKanbanProjectId) {
+      dispatch({
+        type: 'UPDATE_TASK_STATUS',
+        payload: {
+          projectId: selectedKanbanProjectId,
+          taskId,
+          newStatus: columnId,
+        },
+      });
+    }
+    setDraggedOverColumn(null);
+  };
+
+  return (
+    <div className="flex flex-col md:flex-row h-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <aside className="hidden md:block w-1/4 min-w-[250px] bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto">
+        <h2 className="text-lg font-bold text-gray-800">Työtilat</h2>
+        {renderProjectList('Kurssit', courses, <BookOpen className="w-4 h-4" />)}
+        {renderProjectList('Projektit', otherProjects, <ClipboardCheck className="w-4 h-4" />)}
+      </aside>
+
+      <main className="flex-1 p-4 md:p-6 flex flex-col min-w-0">
+        {selectedProject ? (
+          <>
+            <div className="flex items-center justify-between pb-4 border-b border-gray-200 mb-6 flex-shrink-0">
+              <div className="md:hidden relative">
+                <select
+                  value={selectedKanbanProjectId || ''}
+                  onChange={(e) => handleSelectProject(e.target.value)}
+                  className="appearance-none font-bold text-lg bg-transparent border-none p-1 pr-6 -ml-1"
+                >
+                  <optgroup label="Kurssit">
+                    {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </optgroup>
+                  <optgroup label="Projektit">
+                    {otherProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </optgroup>
+                </select>
+                <ChevronDown className="w-5 h-5 absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+              <h1 className="hidden md:block text-2xl font-bold text-gray-900">{selectedProject.name}</h1>
+              <button className="flex items-center text-sm px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md">
+                <Info className="w-4 h-4 mr-2" />
+                <span className="hidden md:inline">Tiedot</span>
+              </button>
+            </div>
+            
+            <div className="flex-1 flex gap-6 overflow-x-auto">
+              {/* MUUTETTU: Haetaan sarakkeet projektilta */}
+              {selectedProject.columns?.map(column => (
+                <div
+                  key={column.id}
+                  onDrop={(e) => handleDrop(e, column.id)}
+                  onDragOver={(e) => { e.preventDefault(); setDraggedOverColumn(column.id); }}
+                  onDragLeave={() => setDraggedOverColumn(null)}
+                  className={`bg-gray-100 rounded-lg p-3 flex flex-col w-80 flex-shrink-0 transition-colors ${
+                    draggedOverColumn === column.id ? 'bg-blue-50' : ''
+                  }`}
+                >
+                  <h3 className="font-semibold text-gray-800 mb-4 px-1">{column.title}</h3>
+                  <div className="flex-1 overflow-y-auto -mr-2 pr-2 min-h-[600px]">
+                    {getTasksForColumn(column.id).map(task => (
+                      <TaskCard key={task.id} task={task} />
+                    ))}
+                    {getTasksForColumn(column.id).length === 0 && (
+                      <div className="flex items-center justify-center h-full text-xs text-gray-400 p-4 border-2 border-dashed border-gray-300 rounded-lg">
+                        Pudota tehtäviä tähän
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {/* LISÄTTY: Uuden sarakkeen lisäys */}
+              <AddColumn projectId={selectedProject.id} />
+            </div>
+          </>
+        ) : (
+          <div className="flex items-center justify-center h-full text-gray-500">
+            <p>Luo ensin kurssi tai projekti.</p>
+          </div>
+        )}
+      </main>
+    </div>
+  );
 }
