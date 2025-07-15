@@ -12,7 +12,6 @@ export default function WeekView() {
   
   const [showWeekend, setShowWeekend] = useState(false);
 
-  // Palattu siistimpään useLayoutEffect-toteutukseen nyt kun layout on korjattu
   useLayoutEffect(() => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = 7 * 48;
@@ -37,7 +36,6 @@ export default function WeekView() {
   const displayDates = showWeekend ? weekDates : weekDates.slice(0, 5);
   const displayDays = showWeekend ? weekDays : weekDays.slice(0, 5);
   const gridColumns = `60px repeat(${displayDates.length}, 1fr)`;
-
 
   const getEventsForDay = (date: Date): Event[] => {
     return events.filter(event => isSameDay(new Date(event.date), date));
@@ -91,40 +89,40 @@ export default function WeekView() {
         </button>
       </div>
 
-      <div className="sticky top-0 bg-white z-20 flex-shrink-0">
-          <div className="grid border-b border-gray-200" style={{ gridTemplateColumns: gridColumns }}>
-            <div className="py-4 px-2 text-center"></div>
-            {displayDates.map((date, index) => (
-              <div key={`header-${index}`} className="py-4 px-2 text-center border-l border-gray-200">
-                <div className="text-sm font-medium text-gray-600">{displayDays[index]}</div>
-                <div className={`text-lg font-semibold mt-1 ${isToday(date) ? 'bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center mx-auto' : 'text-gray-900'}`}>{date.getDate()}.</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid border-b border-gray-200" style={{ gridTemplateColumns: gridColumns }}>
-              <div className="py-1 px-2 text-xs text-gray-500 text-right flex items-center justify-end">koko pv</div>
-              {displayDates.map((date, index) => {
-                  const allDayEvents = getEventsForDay(date).filter(e => !e.startTime);
-                  return (
-                      <div key={`allday-${index}`} className="p-1 border-l border-gray-200 min-h-[30px] space-y-1">
-                          {allDayEvents.map(event => (
-                              <div
-                                  key={event.id}
-                                  onClick={() => handleEventClick(event)}
-                                  className="text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity"
-                                  style={{ backgroundColor: event.color + '20', color: event.color, borderLeft: `3px solid ${event.color}` }}
-                              >
-                                  {event.title}
-                              </div>
-                          ))}
-                      </div>
-                  );
-              })}
-          </div>
-      </div>
-
       <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
+        <div className="sticky top-0 bg-white z-20">
+            <div className="grid border-b border-gray-200" style={{ gridTemplateColumns: gridColumns }}>
+              <div className="py-4 px-2 text-center"></div>
+              {displayDates.map((date, index) => (
+                <div key={`header-${index}`} className="py-4 px-2 text-center border-l border-gray-200">
+                  <div className="text-sm font-medium text-gray-600">{displayDays[index]}</div>
+                  <div className={`text-lg font-semibold mt-1 ${isToday(date) ? 'bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center mx-auto' : 'text-gray-900'}`}>{date.getDate()}.</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid border-b border-gray-200" style={{ gridTemplateColumns: gridColumns }}>
+                <div className="py-1 px-2 text-xs text-gray-500 text-right flex items-center justify-end">koko pv</div>
+                {displayDates.map((date, index) => {
+                    const allDayEvents = getEventsForDay(date).filter(e => !e.startTime);
+                    return (
+                        <div key={`allday-${index}`} className="p-1 border-l border-gray-200 min-h-[30px] space-y-1">
+                            {allDayEvents.map(event => (
+                                <div
+                                    key={event.id}
+                                    onClick={(e) => { e.stopPropagation(); handleEventClick(event); }}
+                                    className="text-xs p-1 rounded truncate cursor-pointer hover:opacity-80 transition-opacity"
+                                    style={{ backgroundColor: event.color + '20', color: event.color, borderLeft: `3px solid ${event.color}` }}
+                                >
+                                    {event.title}
+                                </div>
+                            ))}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+
         <div className="relative">
             <div className="grid" style={{ gridTemplateColumns: gridColumns }}>
                 <div className="col-start-1">
@@ -165,7 +163,7 @@ export default function WeekView() {
                                 return (
                                     <div
                                         key={event.id}
-                                        onClick={() => handleEventClick(event)}
+                                        onClick={(e) => { e.stopPropagation(); handleEventClick(event); }}
                                         className="absolute left-1 right-1 rounded p-1 cursor-pointer hover:opacity-80 transition-opacity text-xs z-10"
                                         style={{
                                             top: `${top}px`,
