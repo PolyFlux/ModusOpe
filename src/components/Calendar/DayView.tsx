@@ -11,7 +11,12 @@ export default function DayView() {
 
   useEffect(() => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTop = 7 * 48;
+      // Varmistetaan, että selain on ehtinyt renderöidä näkymän ennen vieritystä
+      requestAnimationFrame(() => {
+        if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = 7 * 48; // Vieritetään klo 7 kohdalle (7 tuntia * 48px/tunti)
+        }
+      });
     }
   }, [state.selectedDate, state.currentView]);
 
