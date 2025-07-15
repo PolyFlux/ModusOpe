@@ -278,14 +278,14 @@ export default function ProjectModal() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <FileText className="w-4 h-4 inline mr-2" />
-                    Kuvaus
+                    Muistiinpanot
                   </label>
                   <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    rows={3}
-                    placeholder="Projektin kuvaus"
+                    rows={10}
+                    placeholder="Kirjoita kuvaus tai lisää muistiinpanoja"
                   />
                 </div>
 
