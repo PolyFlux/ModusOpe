@@ -29,6 +29,24 @@ export default function TaskList() {
       });
     }
   };
+  
+    const toggleSubtask = (projectId: string, taskId: string, subtaskId: string, completed: boolean) => {
+    const project = projects.find(p => p.id === projectId);
+    const task = project?.tasks.find(t => t.id === taskId);
+
+    if (task && task.subtasks) {
+      const updatedSubtasks = task.subtasks.map(st =>
+        st.id === subtaskId ? { ...st, completed } : st
+      );
+      const updatedTask = { ...task, subtasks: updatedSubtasks };
+
+      dispatch({
+        type: 'UPDATE_TASK',
+        payload: { projectId, task: updatedTask },
+      });
+    }
+  };
+
 
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
@@ -51,7 +69,7 @@ export default function TaskList() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Tehtävät</h1>
         <p className="text-gray-600 mt-2">
-          {pendingTasks.length} pending • {completedTasks.length} completed
+          {pendingTasks.length} odottaa • {completedTasks.length} valmiina
         </p>
       </div>
       <button
@@ -70,7 +88,7 @@ export default function TaskList() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="p-6 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">
-                Pending Tasks ({pendingTasks.length})
+                Odottaa ({pendingTasks.length})
               </h2>
             </div>
             <div className="divide-y divide-gray-200">
@@ -93,8 +111,26 @@ export default function TaskList() {
                       {task.description && (
                         <p className="text-sm text-gray-600 mb-2">{task.description}</p>
                       )}
+
+                      {task.subtasks && task.subtasks.length > 0 && (
+                        <div className="mt-2 space-y-2 pl-4 border-l-2 border-gray-200">
+                          {task.subtasks.map(subtask => (
+                            <div key={subtask.id} className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                checked={subtask.completed}
+                                onChange={() => toggleSubtask(task.projectId, task.id, subtask.id, !subtask.completed)}
+                                className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                              />
+                              <span className={`text-sm ${subtask.completed ? 'line-through text-gray-500' : ''}`}>
+                                {subtask.title}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                      <div className="flex items-center space-x-4 text-sm text-gray-500 mt-2">
                         <div className="flex items-center space-x-1">
                           <div
                             className="w-2 h-2 rounded-full"
@@ -106,7 +142,7 @@ export default function TaskList() {
                         {task.dueDate && (
                           <div className="flex items-center space-x-1">
                             <Calendar className="w-4 h-4" />
-                            <span>Due {formatDate(new Date(task.dueDate))}</span>
+                            <span>Määräaika {formatDate(new Date(task.dueDate))}</span>
                           </div>
                         )}
                         
@@ -131,7 +167,7 @@ export default function TaskList() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="p-6 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">
-                Completed Tasks ({completedTasks.length})
+                Valmiit ({completedTasks.length})
               </h2>
             </div>
             <div className="divide-y divide-gray-200">
@@ -170,8 +206,8 @@ export default function TaskList() {
         {allTasks.length === 0 && (
           <div className="text-center py-12">
             <CheckSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No tasks yet</h3>
-            <p className="text-gray-600">Tasks will appear here when you add them to your projects</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Ei tehtäviä vielä</h3>
+            <p className="text-gray-600">Tehtävät ilmestyvät tänne, kun lisäät niitä projekteihisi</p>
           </div>
         )}
       </div>
