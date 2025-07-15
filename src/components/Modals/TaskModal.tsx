@@ -4,7 +4,7 @@ import { useApp } from '../../contexts/AppContext';
 import { Task, Subtask } from '../../types';
 import { nanoid } from 'nanoid';
 import GoogleDriveBrowser from '../GoogleDrive/GoogleDriveBrowser';
-
+import { GENERAL_TASKS_PROJECT_ID } from '../../contexts/AppContext'; // MUUTOS: Tuodaan vakio
 
 export default function TaskModal() {
   const { state, dispatch } = useApp();
@@ -156,7 +156,7 @@ export default function TaskModal() {
     };
 
     if (selectedTask) {
-      dispatch({ type: 'UPDATE_TASK', payload: { projectId: taskData.projectId, task: taskData } });
+      dispatch({ type: 'UPDATE_TASK', payload: { projectId: taskData.projectId || selectedTask.projectId, task: taskData } });
     } else {
       dispatch({ type: 'ADD_TASK', payload: { projectId: taskData.projectId, task: taskData } });
     }
@@ -216,7 +216,6 @@ export default function TaskModal() {
         <div className="flex-1 overflow-y-auto">
           {activeTab === 'details' ? (
             <form id="task-form-details" onSubmit={handleSubmit} className="p-6 space-y-4">
-              {/* Sisältö pysyy samana kuin aiemmin */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <Bookmark className="w-4 h-4 inline mr-2" />
@@ -228,10 +227,12 @@ export default function TaskModal() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Ei projektia</option>
-                  {projects.map(project => (
-                    <option key={project.id} value={project.id}>
-                      {project.name}
-                    </option>
+                  {projects
+                    .filter(project => project.id !== GENERAL_TASKS_PROJECT_ID) // MUUTOS: Suodatetaan pois yleiset tehtävät
+                    .map(project => (
+                      <option key={project.id} value={project.id}>
+                        {project.name}
+                      </option>
                   ))}
                 </select>
               </div>
@@ -335,8 +336,7 @@ export default function TaskModal() {
             </form>
           ) : (
             <div className="p-6 space-y-6">
-              {/* Tiedostojen latausosio */}
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
                   <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                   <p className="text-sm text-gray-600 mb-2">Vedä tiedostoja tai klikkaa valitaksesi</p>
                   <input type="file" multiple onChange={handleFileUpload} className="hidden" id="file-upload-task"/>
@@ -345,35 +345,33 @@ export default function TaskModal() {
                   </label>
               </div>
 
-              {/* Google Drive -osio */}
               <div>
-                  <button type="button" onClick={() => setShowGoogleDriveBrowser(true)} className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg">
+                  <button type="button" onClick={() => setShowGoogleDriveBrowser(true)} className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700">
                       <FolderOpen className="w-5 h-5 mr-2" /> Selaa Google Drivea
                   </button>
                   <div className="flex items-center space-x-2 mt-2">
                       <input type="url" value={googleDriveUrl} onChange={(e) => setGoogleDriveUrl(e.target.value)} placeholder="Liitä Google Drive -linkki..." className="flex-1 px-3 py-2 border border-gray-300 rounded-lg"/>
-                      <button type="button" onClick={handleGoogleDriveAdd} disabled={!googleDriveUrl.trim()} className="px-4 py-2 bg-green-600 text-white rounded-lg"><ExternalLink className="w-4 h-4" /></button>
+                      <button type="button" onClick={handleGoogleDriveAdd} disabled={!googleDriveUrl.trim()} className="px-4 py-2 bg-green-600 text-white rounded-lg disabled:opacity-50"><ExternalLink className="w-4 h-4" /></button>
                   </div>
               </div>
 
-              {/* Liitetyt tiedostot */}
               {files.length > 0 && (
                   <div className="space-y-2">
                       {files.map((file) => (
-                          <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                              <div className="flex items-center space-x-3">
-                                  {file.type === 'google-drive' ? <ExternalLink className="w-5 h-5 text-green-600" /> : <File className="w-5 h-5 text-blue-600" />}
-                                  <div>
-                                      <div className="font-medium">{file.name}</div>
+                          <div key={file.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                              <div className="flex items-center space-x-3 min-w-0">
+                                  {file.type === 'google-drive' ? <ExternalLink className="w-5 h-5 text-green-600 flex-shrink-0" /> : <File className="w-5 h-5 text-blue-600 flex-shrink-0" />}
+                                  <div className="min-w-0">
+                                      <div className="font-medium truncate">{file.name}</div>
                                       <div className="text-sm text-gray-500">
                                           {file.type === 'google-drive' ? 'Google Drive' : file.size ? formatFileSize(file.size) : 'Tiedosto'} • {file.uploadDate.toLocaleDateString('fi-FI')}
                                       </div>
                                   </div>
                               </div>
-                              <div className="flex items-center space-x-2">
-                                  {file.type === 'google-drive' && file.url && <button type="button" onClick={() => window.open(file.url, '_blank')} className="p-2 text-gray-500"><ExternalLink className="w-4 h-4" /></button>}
-                                  {file.type === 'upload' && <button type="button" className="p-2 text-gray-500"><Download className="w-4 h-4" /></button>}
-                                  <button type="button" onClick={() => handleFileDelete(file.id)} className="p-2 text-red-500"><Trash2 className="w-4 h-4" /></button>
+                              <div className="flex items-center space-x-2 flex-shrink-0">
+                                  {file.type === 'google-drive' && file.url && <button type="button" onClick={() => window.open(file.url, '_blank')} className="p-2 text-gray-500 hover:text-blue-600"><ExternalLink className="w-4 h-4" /></button>}
+                                  {file.type === 'upload' && <button type="button" className="p-2 text-gray-500 hover:text-green-600"><Download className="w-4 h-4" /></button>}
+                                  <button type="button" onClick={() => handleFileDelete(file.id)} className="p-2 text-gray-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
                               </div>
                           </div>
                       ))}
@@ -402,7 +400,7 @@ export default function TaskModal() {
                     Peruuta
                 </button>
                 <button
-                    type="button" // Muutettu, jotta formin voi lähettää vain details-välilehdeltä
+                    type="button"
                     onClick={handleSubmit}
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
