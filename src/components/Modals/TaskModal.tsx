@@ -4,7 +4,7 @@ import { useApp } from '../../contexts/AppContext';
 import { Task, Subtask } from '../../types';
 import { nanoid } from 'nanoid';
 import GoogleDriveBrowser from '../GoogleDrive/GoogleDriveBrowser';
-import { GENERAL_TASKS_PROJECT_ID } from '../../contexts/AppContext'; // MUUTOS: Tuodaan vakio
+import { GENERAL_TASKS_PROJECT_ID } from '../../contexts/AppContext';
 
 export default function TaskModal() {
   const { state, dispatch } = useApp();
@@ -27,7 +27,9 @@ export default function TaskModal() {
 
 
   useEffect(() => {
-    if (selectedTask) {
+    // Erotetaan muokkaus ja luonti tarkistamalla, onko tehtävällä ID
+    if (selectedTask && selectedTask.id) {
+      // Muokataan olemassa olevaa tehtävää
       setFormData({
         title: selectedTask.title,
         description: selectedTask.description || '',
@@ -38,12 +40,13 @@ export default function TaskModal() {
       });
       setFiles(selectedTask.files || []);
     } else {
+      // Luodaan uusi tehtävä (mahdollisesti pohjatiedoilla)
       setFormData({
         title: '',
         description: '',
         priority: 'medium',
         dueDate: '',
-        projectId: '',
+        projectId: selectedTask?.projectId || '', // Esitäytetään projekti, jos se on annettu
         subtasks: [],
       });
       setFiles([]);
@@ -146,7 +149,7 @@ export default function TaskModal() {
       id: selectedTask?.id || Date.now().toString(),
       title: formData.title,
       description: formData.description,
-      completed: selectedTask?.completed || false,
+      completed: (selectedTask && selectedTask.id && selectedTask.completed) || false,
       columnId: selectedTask?.columnId || 'todo',
       priority: formData.priority,
       dueDate: formData.dueDate ? new Date(formData.dueDate) : undefined,
@@ -155,10 +158,11 @@ export default function TaskModal() {
       files: files
     };
 
-    if (selectedTask) {
+    if (selectedTask && selectedTask.id) {
       dispatch({ type: 'UPDATE_TASK', payload: { projectId: taskData.projectId || selectedTask.projectId, task: taskData } });
     } else {
-      dispatch({ type: 'ADD_TASK', payload: { projectId: taskData.projectId, task: taskData } });
+      const targetProjectId = taskData.projectId || GENERAL_TASKS_PROJECT_ID;
+      dispatch({ type: 'ADD_TASK', payload: { projectId: targetProjectId, task: { ...taskData, projectId: targetProjectId } } });
     }
 
     dispatch({ type: 'CLOSE_MODALS' });
@@ -173,12 +177,14 @@ export default function TaskModal() {
 
   if (!showTaskModal) return null;
 
+  const isEditing = selectedTask && selectedTask.id;
+
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
         <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
           <h2 className="text-lg font-semibold text-gray-900">
-            {selectedTask ? 'Muokkaa tehtävää' : 'Luo uusi tehtävä'}
+            {isEditing ? 'Muokkaa tehtävää' : 'Luo uusi tehtävä'}
           </h2>
           <button
             onClick={() => dispatch({ type: 'CLOSE_MODALS' })}
@@ -226,9 +232,9 @@ export default function TaskModal() {
                   onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
-                  <option value="">Ei projektia</option>
+                  <option value="">Ei projektia (Yleiset tehtävät)</option>
                   {projects
-                    .filter(project => project.id !== GENERAL_TASKS_PROJECT_ID) // MUUTOS: Suodatetaan pois yleiset tehtävät
+                    .filter(project => project.id !== GENERAL_TASKS_PROJECT_ID)
                     .map(project => (
                       <option key={project.id} value={project.id}>
                         {project.name}
@@ -382,7 +388,7 @@ export default function TaskModal() {
         </div>
 
         <div className="flex justify-between p-6 border-t border-gray-200 flex-shrink-0">
-            {selectedTask && (
+            {isEditing && (
                 <button
                     type="button"
                     onClick={handleDelete}
@@ -400,11 +406,11 @@ export default function TaskModal() {
                     Peruuta
                 </button>
                 <button
-                    type="button"
-                    onClick={handleSubmit}
+                    type="submit"
+                    form="task-form-details"
                     className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                    {selectedTask ? 'Päivitä tehtävä' : 'Luo tehtävä'}
+                    {isEditing ? 'Päivitä tehtävä' : 'Luo tehtävä'}
                 </button>
             </div>
         </div>
