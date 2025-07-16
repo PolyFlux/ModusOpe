@@ -1,7 +1,7 @@
 import React from 'react';
 import { Calendar, BookOpen, CheckSquare, ClipboardCheck, Home, ChevronLeft, LayoutDashboard } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
-import modusOpeLogo from '../../assets/logo2.jpg'; // Varmista, että tämä polku on oikein
+import modusOpeLogo from '../../assets/logo.png';
 
 interface SidebarProps {
   activeTab: string;
@@ -31,10 +31,9 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
 
   return (
     <div className={sidebarClasses}>
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+      <div className="p-4 border-b border-gray-200 flex justify-between">
         {!isSidebarCollapsed && (
           <div>
-            {/* MUUTETTU: Käytetään inline-tyyliä className-luokan sijaan */}
             <img 
               src={modusOpeLogo} 
               alt="ModusOpe Logo" 
@@ -79,6 +78,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         </ul>
       </nav>
 
+      {/* TÄMÄ OSIO ON VÄLIAIKAISESTI POIS KÄYTÖSTÄ TESTIN AJAKSI 
       {!isSidebarCollapsed && (
         <div className="hidden md:block p-6 border-t border-gray-200">
           <button
@@ -122,7 +122,8 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             Lisää tehtävä
           </button>
         </div>
-      )}
+      )} 
+      */}
     </div>
   );
 }
