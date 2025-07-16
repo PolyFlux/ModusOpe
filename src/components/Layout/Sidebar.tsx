@@ -34,8 +34,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         {!isSidebarCollapsed && (
           <div>
-            {/* MUUTETTU KOKO: h-10 -> h-14 */}
-            <img src={modusOpeLogo} alt="ModusOpe Logo" className="h-14 w-auto" />
+            <img src={modusOpeLogo} alt="ModusOpe Logo" className="h-16 w-auto" />
             <p className="text-sm text-gray-600 mt-1">Opettajien modus operandi</p>
           </div>
         )}
