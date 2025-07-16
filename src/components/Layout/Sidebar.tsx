@@ -1,7 +1,7 @@
 import React from 'react';
 import { Calendar, BookOpen, CheckSquare, ClipboardCheck, Home, ChevronLeft, LayoutDashboard } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
-import modusOpeLogo from '../../assets/logo.jpg'; // TUO LOGO TÄHÄN
+import modusOpeLogo from '../../assets/logo.png'; // Varmista, että tämä polku on oikein
 
 interface SidebarProps {
   activeTab: string;
@@ -34,8 +34,8 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         {!isSidebarCollapsed && (
           <div>
-            {/* KÄYTÄ TUOTUA LOGOA */}
-            <img src={modusOpeLogo} alt="ModusOpe Logo" className="h-10 w-auto" />
+            {/* MUUTETTU KOKO: h-10 -> h-14 */}
+            <img src={modusOpeLogo} alt="ModusOpe Logo" className="h-14 w-auto" />
             <p className="text-sm text-gray-600 mt-1">Opettajien modus operandi</p>
           </div>
         )}
