@@ -1,7 +1,7 @@
 import React from 'react';
 import { Calendar, BookOpen, CheckSquare, ClipboardCheck, Home, ChevronLeft, LayoutDashboard } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
-import modusOpeLogo from '../../assets/logo2.jpg';
+import modusOpeLogo from '../../assets/logo.png';
 
 interface SidebarProps {
   activeTab: string;
@@ -31,7 +31,8 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
 
   return (
     <div className={sidebarClasses}>
-      <div className="p-4 border-b border-gray-200 flex justify-between">
+      {/* YLÄOSA: Kiinteä, ei kutistu */}
+      <div className="flex-shrink-0 p-4 border-b border-gray-200 flex justify-between">
         {!isSidebarCollapsed && (
           <div>
             <img 
@@ -50,7 +51,8 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         </button>
       </div>
 
-      <nav className="flex-1 p-4">
+      {/* KESKIOSA: Täyttää lopun tilan ja vierii tarvittaessa */}
+      <div className="flex-1 overflow-y-auto p-4">
         <ul className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -76,54 +78,12 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             );
           })}
         </ul>
-      </nav>
+      </div>
 
-      {/* TÄMÄ OSIO ON VÄLIAIKAISESTI POIS KÄYTÖSTÄ TESTIN AJAKSI 
+      {/* ALAOSA: Kiinteä, ei kutistu */}
       {!isSidebarCollapsed && (
-        <div className="hidden md:block p-6 border-t border-gray-200">
+        <div className="flex-shrink-0 hidden md:block p-6 border-t border-gray-200">
           <button
             onClick={() => {
               dispatch({ type: 'TOGGLE_EVENT_MODAL' });
               if (isMobileMenuOpen) dispatch({ type: 'TOGGLE_MOBILE_MENU' });
-            }}
-            className="w-full flex items-center justify-center btn-glossy mb-2"
-          >
-            <Calendar className="w-4 h-4 mr-2" />
-            Lisää tapahtuma
-          </button>
-          <button
-            onClick={() => {
-              dispatch({ type: 'TOGGLE_COURSE_MODAL' });
-              if (isMobileMenuOpen) dispatch({ type: 'TOGGLE_MOBILE_MENU' });
-            }}
-            className="w-full flex items-center justify-center btn-glossy mb-2"
-          >
-            <BookOpen className="w-4 h-4 mr-2" />
-            Lisää kurssi
-          </button>
-          <button
-            onClick={() => {
-              dispatch({ type: 'TOGGLE_PROJECT_MODAL' });
-              if (isMobileMenuOpen) dispatch({ type: 'TOGGLE_MOBILE_MENU' });
-            }}
-            className="w-full flex items-center justify-center btn-glossy mb-2"
-          >
-            <ClipboardCheck className="w-4 h-4 mr-2" />
-            Lisää projekti
-          </button>
-          <button
-            onClick={() => {
-              dispatch({ type: 'TOGGLE_TASK_MODAL' });
-              if (isMobileMenuOpen) dispatch({ type: 'TOGGLE_MOBILE_MENU' });
-            }}
-            className="w-full flex items-center justify-center btn-glossy mb-2"
-          >
-            <CheckSquare className="w-4 h-4 mr-2" />
-            Lisää tehtävä
-          </button>
-        </div>
-      )} 
-      */}
-    </div>
-  );
-}
