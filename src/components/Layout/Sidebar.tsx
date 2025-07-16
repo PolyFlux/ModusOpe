@@ -1,7 +1,7 @@
 import React from 'react';
 import { Calendar, BookOpen, CheckSquare, ClipboardCheck, Home, ChevronLeft, LayoutDashboard } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
-import modusOpeLogo from '../../assets/logo.png'; // Varmista, että tämä polku on oikein
+import modusOpeLogo from '../../assets/logo.jpg'; // Varmista, että tämä polku on oikein
 
 interface SidebarProps {
   activeTab: string;
