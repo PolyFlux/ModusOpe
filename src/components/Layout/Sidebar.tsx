@@ -34,7 +34,12 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         {!isSidebarCollapsed && (
           <div>
-            <img src={modusOpeLogo} alt="ModusOpe Logo" className="h-16 w-auto" />
+            {/* MUUTETTU: Käytetään inline-tyyliä className-luokan sijaan */}
+            <img 
+              src={modusOpeLogo} 
+              alt="ModusOpe Logo" 
+              style={{ height: '64px', width: 'auto' }} 
+            />
             <p className="text-sm text-gray-600 mt-1">Opettajien modus operandi</p>
           </div>
         )}
