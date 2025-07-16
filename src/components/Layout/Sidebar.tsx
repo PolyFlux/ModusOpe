@@ -1,6 +1,7 @@
 import React from 'react';
 import { Calendar, BookOpen, CheckSquare, ClipboardCheck, Home, ChevronLeft, LayoutDashboard } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
+import modusOpeLogo from '../../assets/logo.jpg'; // TUO LOGO TÄHÄN
 
 interface SidebarProps {
   activeTab: string;
@@ -11,7 +12,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   const { state, dispatch } = useApp();
   const { isSidebarCollapsed, isMobileMenuOpen } = state;
 
-const menuItems = [
+  const menuItems = [
     { id: 'dashboard', label: 'Kojelauta', icon: Home },
     { id: 'calendar', label: 'Kalenteri', icon: Calendar },
     { id: 'courses', label: 'Kurssit', icon: BookOpen },
@@ -33,13 +34,13 @@ const menuItems = [
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         {!isSidebarCollapsed && (
           <div>
-            <h1 className="text-xl font-bold text-gray-800">ModusOpe</h1>
+            {/* KÄYTÄ TUOTUA LOGOA */}
+            <img src={modusOpeLogo} alt="ModusOpe Logo" className="h-10 w-auto" />
             <p className="text-sm text-gray-600 mt-1">Opettajien modus operandi</p>
           </div>
         )}
         <button
           onClick={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
-          // Piilotetaan tämä painike mobiilissa
           className="p-1.5 rounded-full hover:bg-gray-100 hidden md:block"
         >
           <ChevronLeft className={`transition-transform duration-300 ${isSidebarCollapsed ? 'rotate-180' : ''}`} />
@@ -55,7 +56,6 @@ const menuItems = [
                 <button
                   onClick={() => {
                     onTabChange(item.id);
-                    // Suljetaan mobiilivalikko valinnan jälkeen
                     if (isMobileMenuOpen) {
                       dispatch({ type: 'TOGGLE_MOBILE_MENU' });
                     }
