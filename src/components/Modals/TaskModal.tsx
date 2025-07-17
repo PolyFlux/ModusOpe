@@ -6,6 +6,9 @@ import { Task, Subtask, FileAttachment } from '../../types';
 import { nanoid } from 'nanoid';
 import { GENERAL_TASKS_PROJECT_ID } from '../../contexts/AppContext';
 import AttachmentSection from '../Shared/AttachmentSection';
+import FormInput from '../Forms/FormInput';
+import FormTextarea from '../Forms/FormTextarea';
+import FormSelect from '../Forms/FormSelect';
 
 export default function TaskModal() {
   const { state, dispatch } = useApp();
@@ -159,85 +162,64 @@ export default function TaskModal() {
         <div className="flex-1 overflow-y-auto">
           {activeTab === 'details' ? (
             <form id="task-form-details" onSubmit={handleSubmit} className="p-6 space-y-4">
-              {/* Lomakekentät pysyvät ennallaan... */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Bookmark className="w-4 h-4 inline mr-2" />
-                  Projekti (valinnainen)
-                </label>
-                <select
-                  value={formData.projectId}
-                  onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Ei projektia (Yleiset tehtävät)</option>
-                  {projects
-                    .filter(project => project.id !== GENERAL_TASKS_PROJECT_ID)
-                    .map(project => (
-                      <option key={project.id} value={project.id}>
-                        {project.name}
-                      </option>
-                  ))}
-                </select>
-              </div>
+              <FormSelect
+                id="task-project"
+                label="Projekti (valinnainen)"
+                icon={<Bookmark className="w-4 h-4 inline mr-2" />}
+                value={formData.projectId}
+                onChange={(e) => setFormData({ ...formData, projectId: e.target.value })}
+              >
+                <option value="">Ei projektia (Yleiset tehtävät)</option>
+                {projects
+                  .filter(project => project.id !== GENERAL_TASKS_PROJECT_ID)
+                  .map(project => (
+                    <option key={project.id} value={project.id}>
+                      {project.name}
+                    </option>
+                ))}
+              </FormSelect>
             
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Type className="w-4 h-4 inline mr-2" />
-                  Otsikko
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Tehtävän otsikko"
-                />
-              </div>
+              <FormInput
+                id="task-title"
+                label="Otsikko"
+                icon={<Type className="w-4 h-4 inline mr-2" />}
+                type="text"
+                required
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="Tehtävän otsikko"
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FileText className="w-4 h-4 inline mr-2" />
-                  Kuvaus
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows={3}
-                  placeholder="Tehtävän kuvaus"
-                />
-              </div>
+              <FormTextarea
+                id="task-description"
+                label="Kuvaus"
+                icon={<FileText className="w-4 h-4 inline mr-2" />}
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={3}
+                placeholder="Tehtävän kuvaus"
+              />
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <AlertCircle className="w-4 h-4 inline mr-2" />
-                    Prioriteetti
-                  </label>
-                  <select
-                    value={formData.priority}
-                    onChange={(e) => setFormData({ ...formData, priority: e.target.value as Task['priority'] })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="low">Matala</option>
-                    <option value="medium">Keskitaso</option>
-                    <option value="high">Korkea</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Calendar className="w-4 h-4 inline mr-2" />
-                    Määräpäivä
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.dueDate}
-                    onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
+                <FormSelect
+                  id="task-priority"
+                  label="Prioriteetti"
+                  icon={<AlertCircle className="w-4 h-4 inline mr-2" />}
+                  value={formData.priority}
+                  onChange={(e) => setFormData({ ...formData, priority: e.target.value as Task['priority'] })}
+                >
+                  <option value="low">Matala</option>
+                  <option value="medium">Keskitaso</option>
+                  <option value="high">Korkea</option>
+                </FormSelect>
+                <FormInput
+                  id="task-duedate"
+                  label="Määräpäivä"
+                  icon={<Calendar className="w-4 h-4 inline mr-2" />}
+                  type="date"
+                  value={formData.dueDate}
+                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                />
               </div>
               
               <div>
