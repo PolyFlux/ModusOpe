@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { CheckSquare, Circle, Calendar, AlertCircle, Plus } from 'lucide-react';
 import { formatDate } from '../../utils/dateUtils';
@@ -8,13 +8,16 @@ export default function TaskList() {
   const { state, dispatch } = useApp();
   const { projects } = state;
 
-  const allTasks = projects.flatMap(project => 
+  const allTasks = useMemo(() => projects.flatMap(project => 
     project.tasks.map(task => ({
       ...task,
       projectName: project.name,
       projectColor: project.color
     }))
-  );
+  ), [projects]);
+
+  const completedTasks = useMemo(() => allTasks.filter(task => task.completed), [allTasks]);
+  const pendingTasks = useMemo(() => allTasks.filter(task => !task.completed), [allTasks]);
 
   const handleTaskClick = (task: Task) => {
     // Etsitään alkuperäinen task-olio projekteista, jotta saadaan kaikki data mukaan
@@ -69,9 +72,6 @@ export default function TaskList() {
         return <AlertCircle className="w-4 h-4 text-green-500" />;
     }
   };
-
-  const completedTasks = allTasks.filter(task => task.completed);
-  const pendingTasks = allTasks.filter(task => !task.completed);
 
   return (
     <div className="p-4 md:p-8">
