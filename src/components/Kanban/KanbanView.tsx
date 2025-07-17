@@ -84,7 +84,7 @@ const KanbanColumnComponent = ({ column, tasks, projectId, isTaskDraggedOver, on
         onDragStart={onDragStart}
         draggable={!isDefaultColumn}
     >
-      <div className="flex justify-between items-center mb-2 px-1 cursor-grab active:cursor-grabbing">
+      <div className="flex justify-between items-center mb-2 px-1 cursor-grab active:cursor-grabbing noselect">
         <div className='flex items-center'>
             {!isDefaultColumn && <GripVertical className="w-5 h-5 text-gray-400 mr-1" />}
             {isEditing ? (
