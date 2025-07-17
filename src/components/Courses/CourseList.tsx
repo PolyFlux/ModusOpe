@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { BookOpen, Calendar, CheckSquare, Plus } from 'lucide-react';
 import { formatDate } from '../../utils/dateUtils';
@@ -6,12 +6,14 @@ import { formatDate } from '../../utils/dateUtils';
 export default function CourseList() {
   const { state, dispatch } = useApp();
   
-  // Suodatetaan näytettäväksi vain kurssit
-  const courses = state.projects.filter(p => p.type === 'course');
+  const courses = useMemo(() => 
+    state.projects.filter(p => p.type === 'course'),
+    [state.projects]
+  );
 
   const handleCourseClick = (courseId: string) => {
     dispatch({ type: 'TOGGLE_COURSE_MODAL', payload: { id: courseId } });
-};
+  };
 
   const getTaskStats = (courseId: string) => {
     const course = courses.find(p => p.id === courseId);
@@ -31,12 +33,12 @@ export default function CourseList() {
           <p className="text-gray-600 mt-2">Hallinnoi kurssejasi ja oppimiskokonaisuuksiasi</p>
         </div>
         <button
-    onClick={() => dispatch({ type: 'TOGGLE_COURSE_MODAL' })}
-    className="btn-glossy flex items-center"
->
-    <Plus className="w-4 h-4 mr-2" />
-    Uusi kurssi
-</button>
+          onClick={() => dispatch({ type: 'TOGGLE_COURSE_MODAL' })}
+          className="btn-glossy flex items-center"
+        >
+            <Plus className="w-4 h-4 mr-2" />
+            Uusi kurssi
+        </button>
       </div>
 
       {/* Course Grid */}
