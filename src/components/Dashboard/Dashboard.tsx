@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { Calendar, Clock, CheckSquare, ClipboardCheck, AlertCircle, ListTodo, CalendarClock, XOctagon } from 'lucide-react';
 import { formatDate, isToday, addDays } from '../../utils/dateUtils';
@@ -9,42 +9,40 @@ export default function Dashboard() {
   const { state, dispatch } = useApp();
   const { events, projects } = state;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // Asetetaan päivän alkuun vertailua varten
-  const nextWeek = addDays(today, 7);
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0); // Asetetaan päivän alkuun vertailua varten
+    return d;
+  }, []);
+  
+  const nextWeek = useMemo(() => addDays(today, 7), [today]);
 
-  // Get today's events
-  const todayEvents = events.filter(event => isToday(new Date(event.date)));
+  const todayEvents = useMemo(() => events.filter(event => isToday(new Date(event.date))), [events]);
 
-  // Get all tasks and add project info to them
-  const allTasks = projects.flatMap(project => 
+  const allTasks = useMemo(() => projects.flatMap(project => 
     project.tasks.map(task => ({
       ...task,
       projectName: project.name,
       projectColor: project.color
     }))
-  );
+  ), [projects]);
   
-  // UUSI: Tulevat tehtävät (5 seuraavaa)
-  const upcomingTasks = allTasks
+  const upcomingTasks = useMemo(() => allTasks
     .filter(task => !task.completed && task.dueDate && new Date(task.dueDate) >= today)
     .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
-    .slice(0, 5);
+    .slice(0, 5), [allTasks, today]);
 
-  // Kiireelliset tehtävät (viikon sisällä)
-  const urgentTasks = allTasks
+  const urgentTasks = useMemo(() => allTasks
     .filter(task => !task.completed && task.dueDate && new Date(task.dueDate) >= today && new Date(task.dueDate) <= nextWeek)
     .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
-    .slice(0, 5);
+    .slice(0, 5), [allTasks, today, nextWeek]);
 
-  // Myöhässä olevat tehtävät
-  const overdueTasks = allTasks
+  const overdueTasks = useMemo(() => allTasks
     .filter(task => !task.completed && task.dueDate && new Date(task.dueDate) < today)
     .sort((a, b) => new Date(a.dueDate!).getTime() - new Date(b.dueDate!).getTime())
-    .slice(0, 5);
+    .slice(0, 5), [allTasks, today]);
   
-  // Aktiivisten projektien laskenta
-  const activeProjects = projects.filter(p => p.id !== GENERAL_TASKS_PROJECT_ID);
+  const activeProjects = useMemo(() => projects.filter(p => p.id !== GENERAL_TASKS_PROJECT_ID), [projects]);
 
   const handleTaskClick = (task: Task) => {
     dispatch({ type: 'TOGGLE_TASK_MODAL', payload: task });
