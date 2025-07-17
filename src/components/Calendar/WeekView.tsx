@@ -1,4 +1,4 @@
-import React, { useState, useRef, useLayoutEffect } from 'react';
+import React, { useState, useRef, useLayoutEffect, useMemo } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { formatDate, isToday, isSameDay, addDays } from '../../utils/dateUtils';
 import { Event } from '../../types';
@@ -25,21 +25,29 @@ export default function WeekView() {
     return new Date(d.setDate(diff));
   };
 
-  const monday = getMondayOfWeek(selectedDate);
-  const weekDates = Array.from({ length: 7 }, (_, i) => {
+  const monday = useMemo(() => getMondayOfWeek(selectedDate), [selectedDate]);
+
+  const weekDates = useMemo(() => Array.from({ length: 7 }, (_, i) => {
     const date = new Date(monday);
     date.setDate(monday.getDate() + i);
     return date;
-  });
+  }), [monday]);
 
   const weekDays = ['Ma', 'Ti', 'Ke', 'To', 'Pe', 'La', 'Su'];
-  const displayDates = showWeekend ? weekDates : weekDates.slice(0, 5);
-  const displayDays = showWeekend ? weekDays : weekDays.slice(0, 5);
+  
+  const displayDates = useMemo(() => showWeekend ? weekDates : weekDates.slice(0, 5), [showWeekend, weekDates]);
+  const displayDays = useMemo(() => showWeekend ? weekDays : weekDays.slice(0, 5), [showWeekend]);
+
   const gridColumns = `60px repeat(${displayDates.length}, 1fr)`;
 
-  const getEventsForDay = (date: Date): Event[] => {
-    return events.filter(event => isSameDay(new Date(event.date), date));
-  };
+  const eventsByDay = useMemo(() => {
+    const map = new Map<string, Event[]>();
+    displayDates.forEach(day => {
+      const dayEvents = events.filter(event => isSameDay(new Date(event.date), day));
+      map.set(day.toISOString().split('T')[0], dayEvents);
+    });
+    return map;
+  }, [displayDates, events]);
 
   const handleEventClick = (event: Event) => {
     if (event.type === 'deadline' && event.projectId) {
@@ -104,7 +112,7 @@ export default function WeekView() {
             <div className="grid border-b border-gray-200" style={{ gridTemplateColumns: gridColumns }}>
                 <div className="py-1 px-2 text-xs text-gray-500 text-right flex items-center justify-end">koko pv</div>
                 {displayDates.map((date, index) => {
-                    const allDayEvents = getEventsForDay(date).filter(e => !e.startTime);
+                    const allDayEvents = (eventsByDay.get(date.toISOString().split('T')[0]) || []).filter(e => !e.startTime);
                     return (
                         <div key={`allday-${index}`} className="p-1 border-l border-gray-200 min-h-[30px] space-y-1">
                             {allDayEvents.map(event => (
@@ -143,7 +151,7 @@ export default function WeekView() {
             <div className="absolute top-0 left-0 w-full h-full grid" style={{ gridTemplateColumns: gridColumns }}>
                 <div className="col-start-1"></div>
                  {displayDates.map((date, dateIndex) => {
-                    const timedEvents = getEventsForDay(date).filter(e => !!e.startTime);
+                    const timedEvents = (eventsByDay.get(date.toISOString().split('T')[0]) || []).filter(e => !!e.startTime);
                     return (
                         <div key={dateIndex} className="relative">
                              {timedEvents.map((event) => {
