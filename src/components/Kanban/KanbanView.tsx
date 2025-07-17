@@ -42,7 +42,7 @@ const TaskCard = ({ task, onClick }: { task: Task, onClick: () => void }) => {
   );
 };
 
-const KanbanColumnComponent = ({ column, tasks, projectId }: { column: KanbanColumn, tasks: Task[], projectId: string }) => {
+const KanbanColumnComponent = ({ column, tasks, projectId, isDraggedOver }: { column: KanbanColumn, tasks: Task[], projectId: string, isDraggedOver: boolean }) => {
   const { dispatch } = useApp();
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(column.title);
@@ -83,7 +83,7 @@ const KanbanColumnComponent = ({ column, tasks, projectId }: { column: KanbanCol
 
   return (
     <div 
-        className={`p-3 flex flex-col w-80 flex-shrink-0`}
+        className={`p-3 flex flex-col w-80 flex-shrink-0 rounded-xl transition-colors duration-200 ${isDraggedOver ? 'bg-blue-50' : 'bg-gray-100/60'}`}
         onDragOver={e => e.preventDefault()}
         onDrop={onDrop}
     >
@@ -134,23 +134,21 @@ const KanbanColumnComponent = ({ column, tasks, projectId }: { column: KanbanCol
         </div>
       </div>
       
-      {/* ===== LISÄTTY OSUUS ALKAA ===== */}
       <div className="mb-3">
         <button
           onClick={handleAddTask}
-          className="w-full flex items-center justify-center p-2 text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+          className="w-full flex items-center justify-center p-2 text-sm text-gray-600 bg-white hover:bg-gray-50 rounded-lg transition-colors border border-gray-300"
         >
           <Plus className="w-4 h-4 mr-2" />
           Lisää tehtävä
         </button>
       </div>
-      {/* ===== LISÄTTY OSUUS PÄÄTTYY ===== */}
 
       <div className="flex-1 overflow-y-auto -mr-2 pr-2 min-h-[300px] space-y-3">
         {tasks.map(task => (
           <TaskCard key={task.id} task={task} onClick={() => dispatch({ type: 'TOGGLE_TASK_MODAL', payload: task })} />
         ))}
-        <div className={`flex items-center justify-center text-xs text-gray-400 p-4 border-2 border-dashed rounded-lg ${tasks.length > 0 ? 'border-gray-300' : 'border-gray-300 h-full'}`}>
+        <div className={`flex items-center justify-center text-xs text-gray-400 p-4 border-2 border-dashed rounded-lg transition-colors ${tasks.length > 0 ? 'border-gray-300' : 'border-gray-300 h-full'} ${isDraggedOver ? 'border-blue-400 bg-blue-100/50' : ''}`}>
           Pudota tehtäviä tähän
         </div>
       </div>
@@ -338,14 +336,13 @@ export default function KanbanView() {
                   onDrop={(e) => handleDrop(e, column.id)}
                   onDragOver={(e) => { e.preventDefault(); setDraggedOverColumn(column.id); }}
                   onDragLeave={() => setDraggedOverColumn(null)}
-                  className={`rounded-lg transition-colors ${
-                    draggedOverColumn === column.id ? 'bg-blue-50' : ''
-                  }`}
+                  onDragEnd={() => setDraggedOverColumn(null)} // Varmistetaan, että tila nollautuu
                 >
                   <KanbanColumnComponent 
                     column={column} 
                     tasks={getTasksForColumn(column.id)}
                     projectId={selectedProject.id}
+                    isDraggedOver={draggedOverColumn === column.id}
                   />
                 </div>
               ))}
