@@ -83,7 +83,7 @@ const KanbanColumnComponent = ({ column, tasks, projectId, isDraggedOver }: { co
 
   return (
     <div 
-        className={`p-3 flex flex-col w-80 flex-shrink-0 rounded-xl transition-colors duration-200 ${isDraggedOver ? 'bg-blue-50' : 'bg-gray-100/60'}`}
+        className={`p-3 flex flex-col w-72 flex-shrink-0 rounded-xl transition-colors duration-200 ${isDraggedOver ? 'bg-blue-50' : 'bg-gray-100/60'}`}
         onDragOver={e => e.preventDefault()}
         onDrop={onDrop}
     >
@@ -172,7 +172,7 @@ const AddColumn = ({ projectId }: { projectId: string }) => {
 
     if (!isEditing) {
         return (
-            <div className="w-80 flex-shrink-0 p-3">
+            <div className="w-72 flex-shrink-0 p-3">
               <button
                   onClick={() => setIsEditing(true)}
                   className="w-full h-full flex items-center justify-center p-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:bg-gray-100 hover:border-gray-400 transition-colors"
@@ -185,7 +185,7 @@ const AddColumn = ({ projectId }: { projectId: string }) => {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="w-80 flex-shrink-0 p-3 bg-gray-100 rounded-lg">
+        <form onSubmit={handleSubmit} className="w-72 flex-shrink-0 p-3 bg-gray-100 rounded-lg">
             <input
                 autoFocus
                 value={title}
@@ -288,7 +288,7 @@ export default function KanbanView() {
 
   return (
     <div className="flex flex-col md:flex-row h-full bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-      <aside className="hidden md:block w-1/4 min-w-[250px] bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto">
+      <aside className="hidden md:block w-1/5 min-w-[200px] bg-gray-50 border-r border-gray-200 p-4 overflow-y-auto">
         <h2 className="text-lg font-bold text-gray-800">Työtilat</h2>
         
         {generalProject && renderProjectList('Yleiset', [generalProject], <Inbox className="w-4 h-4" />)}
@@ -336,7 +336,7 @@ export default function KanbanView() {
                   onDrop={(e) => handleDrop(e, column.id)}
                   onDragOver={(e) => { e.preventDefault(); setDraggedOverColumn(column.id); }}
                   onDragLeave={() => setDraggedOverColumn(null)}
-                  onDragEnd={() => setDraggedOverColumn(null)} // Varmistetaan, että tila nollautuu
+                  onDragEnd={() => setDraggedOverColumn(null)}
                 >
                   <KanbanColumnComponent 
                     column={column} 
