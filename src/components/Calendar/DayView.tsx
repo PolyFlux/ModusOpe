@@ -1,4 +1,4 @@
-import React, { useRef, useLayoutEffect } from 'react';
+import React, { useRef, useLayoutEffect, useMemo } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { formatDate, isSameDay, addDays } from '../../utils/dateUtils';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
@@ -9,12 +9,13 @@ export default function DayView() {
   const { state, dispatch } = useApp();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Palattu siistimpään useLayoutEffect-toteutukseen nyt kun layout on korjattu
   useLayoutEffect(() => {
     if (scrollContainerRef.current) {
       scrollContainerRef.current.scrollTop = 7 * 48;
     }
   }, [state.selectedDate, state.currentView]);
+
+  const { selectedDate, events } = state;
 
   const navigateDay = (direction: 'prev' | 'next') => {
     const newDate = addDays(selectedDate, direction === 'next' ? 1 : -1);
@@ -27,15 +28,14 @@ export default function DayView() {
     const adjustedDate = new Date(newDate.getTime() + timezoneOffset);
     dispatch({ type: 'SET_SELECTED_DATE', payload: adjustedDate });
   };
-  const { selectedDate, events } = state;
 
-  const dayEvents = events.filter(event => 
-    isSameDay(new Date(event.date), selectedDate)
+  const dayEvents = useMemo(() => 
+    events.filter(event => isSameDay(new Date(event.date), selectedDate)),
+    [events, selectedDate]
   );
   
-  const allDayEvents = dayEvents.filter(e => !e.startTime);
-  const timedEvents = dayEvents.filter(e => !!e.startTime);
-
+  const allDayEvents = useMemo(() => dayEvents.filter(e => !e.startTime), [dayEvents]);
+  const timedEvents = useMemo(() => dayEvents.filter(e => !!e.startTime), [dayEvents]);
 
   const handleEventClick = (event: Event) => {
     if (event.type === 'deadline' && event.projectId) {
