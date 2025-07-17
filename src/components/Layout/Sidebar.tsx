@@ -31,14 +31,14 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
 
   return (
     <div className={sidebarClasses}>
-      {/* YLÄOSA: Kiinteä, ei kutistu */}
       <div className="flex-shrink-0 p-4 border-b border-gray-200 flex justify-between">
         {!isSidebarCollapsed && (
           <div>
+            {/* Palautettu Tailwind-luokkaan. Kokoa voi säätää (esim. h-12, h-14, h-16) */}
             <img 
               src={modusOpeLogo} 
               alt="ModusOpe Logo" 
-              style={{ height: '64px', width: 'auto' }} 
+              className="h-16 w-auto"
             />
             <p className="text-sm text-gray-600 mt-1">Opettajien modus operandi</p>
           </div>
@@ -51,7 +51,6 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         </button>
       </div>
 
-      {/* KESKIOSA: Täyttää lopun tilan ja vierii tarvittaessa */}
       <div className="flex-1 overflow-y-auto p-4">
         <ul className="space-y-2">
           {menuItems.map((item) => {
@@ -80,7 +79,6 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         </ul>
       </div>
 
-      {/* ALAOSA: Kiinteä, ei kutistu */}
       {!isSidebarCollapsed && (
         <div className="flex-shrink-0 hidden md:block p-6 border-t border-gray-200">
           <button
