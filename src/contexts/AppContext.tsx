@@ -118,7 +118,8 @@ type AppAction =
   | { type: 'UPDATE_COLUMN'; payload: { projectId: string; column: KanbanColumn } }
   | { type: 'DELETE_COLUMN'; payload: { projectId: string; columnId: string } }
   | { type: 'SHOW_CONFIRMATION_MODAL'; payload: Omit<ConfirmationModalState, 'isOpen'> }
-  | { type: 'CLOSE_CONFIRMATION_MODAL' };
+  | { type: 'CLOSE_CONFIRMATION_MODAL' }
+  | { type: 'REORDER_COLUMNS'; payload: { projectId: string; startIndex: number; endIndex: number } }; // UUSI
 
 const initialConfirmationState: ConfirmationModalState = {
     isOpen: false,
@@ -524,6 +525,20 @@ function appReducer(state: AppState, action: AppAction): AppState {
         ...state,
         confirmationModal: initialConfirmationState,
       };
+
+    case 'REORDER_COLUMNS': { // UUSI
+      const { projectId, startIndex, endIndex } = action.payload;
+      const newProjects = state.projects.map(p => {
+        if (p.id === projectId) {
+          const newColumns = Array.from(p.columns);
+          const [removed] = newColumns.splice(startIndex, 1);
+          newColumns.splice(endIndex, 0, removed);
+          return { ...p, columns: newColumns };
+        }
+        return p;
+      });
+      return { ...state, projects: newProjects };
+    }
 
     default:
       return state;
