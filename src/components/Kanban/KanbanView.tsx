@@ -5,7 +5,7 @@ import { BookOpen, ClipboardCheck, Info, AlertCircle, Calendar, ChevronDown, Plu
 import { formatDate } from '../../utils/dateUtils';
 import { GENERAL_TASKS_PROJECT_ID } from '../../contexts/AppContext';
 
-// Uudet tyyppimääritykset raahaukselle
+// Tyyppimääritykset raahaukselle
 const DND_TYPES = {
   TASK: 'task',
   COLUMN: 'column'
@@ -48,7 +48,7 @@ const TaskCard = ({ task, onClick }: { task: Task, onClick: () => void }) => {
   );
 };
 
-const KanbanColumnComponent = ({ column, tasks, projectId, isTaskDraggedOver, onDragStart, onDropColumn, isColumnDragged }: { column: KanbanColumn, tasks: Task[], projectId: string, isTaskDraggedOver: boolean, onDragStart: () => void, onDropColumn: () => void, isColumnDragged: boolean }) => {
+const KanbanColumnComponent = ({ column, tasks, projectId, isTaskDraggedOver, onDragStart, onDropColumn, isColumnDragged }: { column: KanbanColumn, tasks: Task[], projectId: string, isTaskDraggedOver: boolean, onDragStart: (e: React.DragEvent) => void, onDropColumn: (e: React.DragEvent) => void, isColumnDragged: boolean }) => {
   const { dispatch } = useApp();
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(column.title);
@@ -81,10 +81,12 @@ const KanbanColumnComponent = ({ column, tasks, projectId, isTaskDraggedOver, on
     <div 
         className={`p-3 flex flex-col w-72 flex-shrink-0 rounded-xl transition-colors duration-200 ${isTaskDraggedOver ? 'bg-blue-50' : 'bg-gray-100/60'} ${isColumnDragged ? 'opacity-50' : ''}`}
         onDrop={onDropColumn}
-        onDragStart={onDragStart}
-        draggable={!isDefaultColumn}
     >
-      <div className="flex justify-between items-center mb-2 px-1 cursor-grab active:cursor-grabbing noselect">
+      <div 
+        className="flex justify-between items-center mb-2 px-1 cursor-grab active:cursor-grabbing noselect"
+        draggable={!isDefaultColumn}
+        onDragStart={onDragStart}
+      >
         <div className='flex items-center'>
             {!isDefaultColumn && <GripVertical className="w-5 h-5 text-gray-400 mr-1" />}
             {isEditing ? (
