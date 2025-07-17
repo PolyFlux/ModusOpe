@@ -13,6 +13,7 @@ import ScheduleTemplateModal from './components/Modals/ScheduleTemplateModal';
 import RecurringClassModal from './components/Modals/RecurringClassModal';
 import TaskModal from './components/Modals/TaskModal';
 import KanbanView from './components/Kanban/KanbanView';
+import ConfirmationModal from './components/Modals/ConfirmationModal'; // UUSI
 import { Menu, Plus, Calendar as CalendarIcon, BookOpen, ClipboardCheck, CheckSquare } from 'lucide-react';
 
 function AppContent() {
@@ -52,14 +53,11 @@ function AppContent() {
           <h1 className="text-lg font-bold ml-4">ModusOpe</h1>
         </header>
 
-        {/* KORJAUS: Muutettu rakennetta, jotta sisäinen vieritys toimii oikein. */}
-        {/* Poistettu "overflow-auto" ja ympäröivä div, jotta kalenteri voi hallita omaa korkeuttaan */}
         <main className="flex-1 flex flex-col min-h-0">
           {renderContent()}
         </main>
       </div>
 
-      {/* Sivupalkin peittokuva */}
       {isMobileMenuOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
@@ -67,7 +65,6 @@ function AppContent() {
         />
       )}
 
-      {/* UUSI/MUUTETTU OSA: Lisää-valikon peittokuva */}
       {isFabMenuOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-20 z-30 md:hidden"
@@ -110,6 +107,7 @@ function AppContent() {
       <ScheduleTemplateModal />
       <RecurringClassModal />
       <TaskModal />
+      <ConfirmationModal /> {/* UUSI */}
     </div>
   );
 }
