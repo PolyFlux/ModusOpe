@@ -1,8 +1,9 @@
+// src/components/Modals/RecurringClassModal.tsx
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Type, FileText, Clock, File, Upload, ExternalLink, Download, Trash2, FolderOpen } from 'lucide-react';
+import { X, Calendar, Type, FileText, Clock, File } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
-import { RecurringClass } from '../../types';
-import GoogleDriveBrowser from '../GoogleDrive/GoogleDriveBrowser';
+import { RecurringClass, FileAttachment } from '../../types';
+import AttachmentSection from '../Shared/AttachmentSection';
 
 export default function RecurringClassModal() {
   const { state, dispatch } = useApp();
@@ -17,19 +18,8 @@ export default function RecurringClassModal() {
     endDate: ''
   });
 
-  // File management state
-  const [files, setFiles] = useState<Array<{
-    id: string;
-    name: string;
-    type: 'upload' | 'google-drive';
-    url?: string;
-    size?: number;
-    uploadDate: Date;
-  }>>([]);
-  const [googleDriveUrl, setGoogleDriveUrl] = useState('');
-  const [showGoogleDriveBrowser, setShowGoogleDriveBrowser] = useState(false);
+  const [files, setFiles] = useState<FileAttachment[]>([]);
 
-  // Group templates by name - memoized to prevent unnecessary re-renders
   const templateGroups = React.useMemo(() => {
     const groups: { [key: string]: typeof scheduleTemplates } = {};
     scheduleTemplates.forEach(template => {
@@ -41,14 +31,12 @@ export default function RecurringClassModal() {
     return groups;
   }, [scheduleTemplates]);
 
-  // Memoize template group names to prevent useEffect from running unnecessarily
   const templateGroupNames = React.useMemo(() => {
     return Object.keys(templateGroups);
   }, [templateGroups]);
 
   useEffect(() => {
     if (selectedRecurringClass) {
-      // Find the template group name for existing recurring class
       const template = scheduleTemplates.find(t => t.id === selectedRecurringClass.scheduleTemplateId);
       setFormData({
         title: selectedRecurringClass.title,
@@ -72,72 +60,7 @@ export default function RecurringClassModal() {
       setFiles([]);
     }
     setActiveTab('details');
-    setGoogleDriveUrl('');
-    setShowGoogleDriveBrowser(false);
-  }, [selectedRecurringClass, scheduleTemplates]);
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const uploadedFiles = Array.from(event.target.files || []);
-    const newFiles = uploadedFiles.map(file => ({
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      type: 'upload' as const,
-      size: file.size,
-      uploadDate: new Date()
-    }));
-    setFiles(prev => [...prev, ...newFiles]);
-  };
-
-  const handleGoogleDriveAdd = () => {
-    if (!googleDriveUrl.trim()) return;
-    
-    let fileName = 'Google Drive -tiedosto';
-    try {
-      const url = new URL(googleDriveUrl);
-      const pathParts = url.pathname.split('/');
-      const fileId = pathParts[pathParts.indexOf('d') + 1] || pathParts[pathParts.length - 1];
-      fileName = `Google Drive -tiedosto (${fileId.substring(0, 8)}...)`;
-    } catch (e) {
-      // Use default name if URL parsing fails
-    }
-
-    const newFile = {
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      name: fileName,
-      type: 'google-drive' as const,
-      url: googleDriveUrl,
-      uploadDate: new Date()
-    };
-    
-    setFiles(prev => [...prev, newFile]);
-    setGoogleDriveUrl('');
-  };
-
-  const handleGoogleDriveFilesSelected = (selectedFiles: any[]) => {
-    const newFiles = selectedFiles.map(file => ({
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      type: 'google-drive' as const,
-      url: file.webViewLink || file.webContentLink,
-      size: file.size ? parseInt(file.size) : undefined,
-      uploadDate: new Date()
-    }));
-    
-    setFiles(prev => [...prev, ...newFiles]);
-    setShowGoogleDriveBrowser(false);
-  };
-
-  const handleFileDelete = (fileId: string) => {
-    setFiles(prev => prev.filter(file => file.id !== fileId));
-  };
-
-  const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
+  }, [selectedRecurringClass, scheduleTemplates, templateGroupNames]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,7 +68,6 @@ export default function RecurringClassModal() {
     const selectedTemplates = templateGroups[formData.templateGroupName];
     if (!selectedTemplates || selectedTemplates.length === 0) return;
 
-    // Create recurring classes for each template in the group
     selectedTemplates.forEach((template, index) => {
       const classData: RecurringClass = {
         id: selectedRecurringClass?.id || `${Date.now()}-${index}`,
@@ -161,10 +83,8 @@ export default function RecurringClassModal() {
       };
 
       if (selectedRecurringClass && index === 0) {
-        // Update existing (only for the first one if editing)
         dispatch({ type: 'UPDATE_RECURRING_CLASS', payload: classData });
       } else if (!selectedRecurringClass) {
-        // Add new
         dispatch({ type: 'ADD_RECURRING_CLASS', payload: classData });
       }
     });
@@ -200,8 +120,6 @@ export default function RecurringClassModal() {
             <X className="w-5 h-5" />
           </button>
         </div>
-
-        {/* Tabs */}
         <div className="flex border-b border-gray-200 flex-shrink-0">
           <button
             onClick={() => setActiveTab('details')}
@@ -230,6 +148,7 @@ export default function RecurringClassModal() {
         <div className="flex-1 overflow-y-auto">
           {activeTab === 'details' ? (
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
+              {/* Lomakekentät pysyvät ennallaan... */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   <Type className="w-4 h-4 inline mr-2" />
@@ -347,157 +266,14 @@ export default function RecurringClassModal() {
               </div>
             </form>
           ) : (
-            <div className="p-6 space-y-6">
-              {/* File Upload Section */}
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Liitetiedostot</h3>
-                
-                {/* Upload Area */}
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                  <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-600 mb-2">
-                    Vedä tiedostoja tähän tai klikkaa valitaksesi
-                  </p>
-                  <input
-                    type="file"
-                    multiple
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    id="file-upload-recurring"
-                  />
-                  <label
-                    htmlFor="file-upload-recurring"
-                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 cursor-pointer transition-colors"
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    Valitse tiedostoja
-                  </label>
-                </div>
-              </div>
-
-              {/* Google Drive Section */}
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Google Drive</h3>
-                
-                {/* Google Drive Browser Button */}
-                <div className="mb-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowGoogleDriveBrowser(true)}
-                    className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    <FolderOpen className="w-5 h-5 mr-2" />
-                    Selaa Google Drive -tiedostoja
-                  </button>
-                  <p className="text-xs text-gray-500 mt-2 text-center">
-                    Kirjaudu Google-tilillesi ja selaa tiedostojasi suoraan
-                  </p>
-                </div>
-
-                {/* Manual URL Input */}
-                <div className="border-t border-gray-200 pt-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Tai liitä linkki manuaalisesti:</h4>
-                  <div className="flex space-x-2">
-                    <input
-                      type="url"
-                      value={googleDriveUrl}
-                      onChange={(e) => setGoogleDriveUrl(e.target.value)}
-                      placeholder="Liitä Google Drive -tiedoston linkki..."
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleGoogleDriveAdd}
-                      disabled={!googleDriveUrl.trim()}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Varmista, että linkki on julkinen tai jaettu asianmukaisesti
-                  </p>
-                </div>
-              </div>
-
-              {/* Files List */}
-              {files.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Liitetyt tiedostot</h3>
-                  <div className="space-y-2">
-                    {files.map((file) => (
-                      <div
-                        key={file.id}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
-                      >
-                        <div className="flex items-center space-x-3">
-                          {file.type === 'google-drive' ? (
-                            <ExternalLink className="w-5 h-5 text-green-600" />
-                          ) : (
-                            <File className="w-5 h-5 text-blue-600" />
-                          )}
-                          <div>
-                            <div className="font-medium text-gray-900">{file.name}</div>
-                            <div className="text-sm text-gray-500">
-                              {file.type === 'google-drive' ? 'Google Drive' : 
-                               file.size ? formatFileSize(file.size) : 'Tiedosto'} • 
-                              {file.uploadDate.toLocaleDateString('fi-FI')}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {file.type === 'google-drive' && file.url && (
-                            <button
-                              type="button"
-                              onClick={() => window.open(file.url, '_blank')}
-                              className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
-                              title="Avaa Google Drivessa"
-                            >
-                              <ExternalLink className="w-4 h-4" />
-                            </button>
-                          )}
-                          {file.type === 'upload' && (
-                            <button
-                              type="button"
-                              className="p-2 text-gray-500 hover:text-green-600 transition-colors"
-                              title="Lataa tiedosto"
-                            >
-                              <Download className="w-4 h-4" />
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleFileDelete(file.id)}
-                            className="p-2 text-gray-500 hover:text-red-600 transition-colors"
-                            title="Poista tiedosto"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {files.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <File className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                  <p>Ei liitettyjä tiedostoja</p>
-                </div>
-              )}
-            </div>
+            <AttachmentSection
+              files={files}
+              onFilesChange={setFiles}
+              fileInputId="file-upload-recurring"
+            />
           )}
         </div>
       </div>
-
-      {/* Google Drive Browser Modal */}
-      {showGoogleDriveBrowser && (
-        <GoogleDriveBrowser
-          onFilesSelected={handleGoogleDriveFilesSelected}
-          onClose={() => setShowGoogleDriveBrowser(false)}
-        />
-      )}
     </div>
   );
 }
