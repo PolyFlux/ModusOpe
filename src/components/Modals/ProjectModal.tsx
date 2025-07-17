@@ -1,15 +1,16 @@
+// src/components/Modals/ProjectModal.tsx
 import React, { useState, useEffect } from 'react';
-import { X, BookOpen, FileText, Calendar, Plus, Trash2, File, Upload, ExternalLink, Download, FolderOpen } from 'lucide-react';
+import { X, BookOpen, FileText, Calendar, Plus, Trash2, File } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
-import { Project, Task } from '../../types';
-import GoogleDriveBrowser from '../GoogleDrive/GoogleDriveBrowser';
+import { Project, Task, FileAttachment } from '../../types';
 import { GENERAL_TASKS_PROJECT_ID } from '../../contexts/AppContext';
-import { useConfirmation } from '../../hooks/useConfirmation'; // UUSI
+import { useConfirmation } from '../../hooks/useConfirmation';
+import AttachmentSection from '../Shared/AttachmentSection';
 
 export default function ProjectModal() {
   const { state, dispatch } = useApp();
   const { showProjectModal, selectedProjectId, projects } = state;
-  const { getConfirmation } = useConfirmation(); // UUSI
+  const { getConfirmation } = useConfirmation();
 
   const selectedProject = selectedProjectId
     ? projects.find(p => p.id === selectedProjectId)
@@ -29,10 +30,8 @@ export default function ProjectModal() {
   });
 
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [files, setFiles] = useState<any[]>([]);
-  const [googleDriveUrl, setGoogleDriveUrl] = useState('');
-  const [showGoogleDriveBrowser, setShowGoogleDriveBrowser] = useState(false);
-
+  const [files, setFiles] = useState<FileAttachment[]>([]);
+  
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -70,65 +69,10 @@ export default function ProjectModal() {
     }
     setShowAddTask(false);
     setActiveTab('details');
-    setGoogleDriveUrl('');
-    setShowGoogleDriveBrowser(false);
   }, [selectedProject, showProjectModal]);
-
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const uploadedFiles = Array.from(event.target.files || []);
-    const newFiles = uploadedFiles.map(file => ({
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      type: 'upload' as const,
-      size: file.size,
-      uploadDate: new Date()
-    }));
-    setFiles(prev => [...prev, ...newFiles]);
-  };
-
-  const handleGoogleDriveAdd = () => {
-    if (!googleDriveUrl.trim()) return;
-
-    let fileName = 'Google Drive -tiedosto';
-    try {
-      const url = new URL(googleDriveUrl);
-      const pathParts = url.pathname.split('/');
-      const fileId = pathParts[pathParts.indexOf('d') + 1] || pathParts[pathParts.length - 1];
-      fileName = `Google Drive -tiedosto (${fileId.substring(0, 8)}...)`;
-    } catch (e) {}
-
-    const newFile = {
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      name: fileName,
-      type: 'google-drive' as const,
-      url: googleDriveUrl,
-      uploadDate: new Date()
-    };
-    setFiles(prev => [...prev, newFile]);
-    setGoogleDriveUrl('');
-  };
-
-    const handleGoogleDriveFilesSelected = (selectedFiles: any[]) => {
-    const newFiles = selectedFiles.map(file => ({
-      id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
-      name: file.name,
-      type: 'google-drive' as const,
-      url: file.webViewLink || file.webContentLink,
-      size: file.size ? parseInt(file.size) : undefined,
-      uploadDate: new Date()
-    }));
-    setFiles(prev => [...prev, ...newFiles]);
-    setShowGoogleDriveBrowser(false);
-  };
-
-  const handleFileDelete = (fileId: string) => {
-    setFiles(prev => prev.filter(file => file.id !== fileId));
-  };
-
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     const projectId = selectedProject?.id || Date.now().toString();
     
     const projectData: Project = {
@@ -150,13 +94,11 @@ export default function ProjectModal() {
     } else {
       dispatch({ type: 'ADD_PROJECT', payload: projectData });
     }
-
     dispatch({ type: 'CLOSE_MODALS' });
   };
 
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
-
     const taskData: Task = {
       id: Date.now().toString(),
       title: newTask.title,
@@ -168,7 +110,6 @@ export default function ProjectModal() {
       projectId: selectedProject?.id || 'temp-id'
     };
     setTasks([...tasks, taskData]);
-
     setNewTask({ title: '', description: '', priority: 'medium', dueDate: '' });
     setShowAddTask(false);
   };
@@ -181,14 +122,12 @@ export default function ProjectModal() {
      setTasks(tasks.map(t => t.id === taskToToggle.id ? {...t, completed: !t.completed} : t));
   };
 
-  // UUSI: handleDelete käyttää nyt omaa modaalia
   const handleDelete = async () => {
     if (selectedProject) {
       const confirmed = await getConfirmation({
         title: 'Vahvista poisto',
-        message: `Haluatko varmasti poistaa projektin "${selectedProject.name}"? Tätä toimintoa ei voi tämän jälkeen perua.`
+        message: `Haluatko varmasti poistaa projektin "${selectedProject.name}"? Tätä toimintoa ei voi perua.`
       });
-
       if (confirmed) {
         dispatch({ type: 'DELETE_PROJECT', payload: selectedProject.id });
         dispatch({ type: 'CLOSE_MODALS' });
@@ -196,14 +135,6 @@ export default function ProjectModal() {
     }
   };
   
-    const formatFileSize = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-  };
-
   if (!showProjectModal) return null;
 
   const colorOptions = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#6B7280'];
@@ -252,6 +183,7 @@ export default function ProjectModal() {
               {activeTab === 'details' ? (
                   <div>
                       <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                        {/* Lomakekentät pysyvät ennallaan... */}
                            <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <BookOpen className="w-4 h-4 inline mr-2" />
@@ -498,146 +430,13 @@ export default function ProjectModal() {
                       </div>
                   </div>
               ) : (
-                  <div className="p-6 space-y-6">
-                       <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Liitetiedostot</h3>
-                
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                  <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-600 mb-2">
-                    Vedä tiedostoja tähän tai klikkaa valitaksesi
-                  </p>
-                  <input
-                    type="file"
-                    multiple
-                    onChange={handleFileUpload}
-                    className="hidden"
-                    id="file-upload-project"
+                  <AttachmentSection 
+                    files={files}
+                    onFilesChange={setFiles}
+                    fileInputId="file-upload-project"
                   />
-                  <label
-                    htmlFor="file-upload-project"
-                    className="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 cursor-pointer transition-colors"
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    Valitse tiedostoja
-                  </label>
-                </div>
-              </div>
-              <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Google Drive</h3>
-                
-                <div className="mb-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowGoogleDriveBrowser(true)}
-                    className="w-full flex items-center justify-center px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    <FolderOpen className="w-5 h-5 mr-2" />
-                    Selaa Google Drive -tiedostoja
-                  </button>
-                  <p className="text-xs text-gray-500 mt-2 text-center">
-                    Kirjaudu Google-tilillesi ja selaa tiedostojasi suoraan
-                  </p>
-                </div>
-
-                <div className="border-t border-gray-200 pt-4">
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">Tai liitä linkki manuaalisesti:</h4>
-                  <div className="flex space-x-2">
-                    <input
-                      type="url"
-                      value={googleDriveUrl}
-                      onChange={(e) => setGoogleDriveUrl(e.target.value)}
-                      placeholder="Liitä Google Drive -tiedoston linkki..."
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleGoogleDriveAdd}
-                      disabled={!googleDriveUrl.trim()}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      <ExternalLink className="w-4 h-4" />
-                    </button>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Varmista, että linkki on julkinen tai jaettu asianmukaisesti
-                  </p>
-                </div>
-              </div>
-
-              {files.length > 0 && (
-                <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Liitetyt tiedostot</h3>
-                  <div className="space-y-2">
-                    {files.map((file) => (
-                      <div
-                        key={file.id}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200"
-                      >
-                        <div className="flex items-center space-x-3">
-                          {file.type === 'google-drive' ? (
-                            <ExternalLink className="w-5 h-5 text-green-600" />
-                          ) : (
-                            <File className="w-5 h-5 text-blue-600" />
-                          )}
-                          <div>
-                            <div className="font-medium text-gray-900">{file.name}</div>
-                            <div className="text-sm text-gray-500">
-                              {file.type === 'google-drive' ? 'Google Drive' : 
-                               file.size ? formatFileSize(file.size) : 'Tiedosto'} • 
-                              {file.uploadDate.toLocaleDateString('fi-FI')}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {file.type === 'google-drive' && file.url && (
-                            <button
-                              type="button"
-                              onClick={() => window.open(file.url, '_blank')}
-                              className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
-                              title="Avaa Google Drivessa"
-                            >
-                              <ExternalLink className="w-4 h-4" />
-                            </button>
-                          )}
-                          {file.type === 'upload' && (
-                            <button
-                              type="button"
-                              className="p-2 text-gray-500 hover:text-green-600 transition-colors"
-                              title="Lataa tiedosto"
-                            >
-                              <Download className="w-4 h-4" />
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => handleFileDelete(file.id)}
-                            className="p-2 text-gray-500 hover:text-red-600 transition-colors"
-                            title="Poista tiedosto"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {files.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <File className="w-12 h-12 mx-auto mb-2 text-gray-300" />
-                  <p>Ei liitettyjä tiedostoja</p>
-                </div>
-              )}
-                  </div>
               )}
           </div>
-          {showGoogleDriveBrowser && (
-              <GoogleDriveBrowser
-                  onFilesSelected={handleGoogleDriveFilesSelected}
-                  onClose={() => setShowGoogleDriveBrowser(false)}
-              />
-          )}
       </div>
       </div>
   );
