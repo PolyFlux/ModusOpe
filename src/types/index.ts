@@ -3,6 +3,15 @@ export interface KanbanColumn {
   title: string;
 }
 
+export interface FileAttachment {
+  id: string;
+  name: string;
+  type: 'upload' | 'google-drive';
+  url?: string;
+  size?: number;
+  uploadDate: Date;
+}
+
 export interface Event {
   id:string;
   title: string;
@@ -13,16 +22,9 @@ export interface Event {
   type: 'class' | 'meeting' | 'deadline' | 'personal' | 'assignment';
   color: string;
   projectId?: string;
-  scheduleTemplateId?: string; // Link to schedule template
-  groupName?: string; // Ryhmänimi joukkomuokkausta varten
-  files?: Array<{
-    id: string;
-    name: string;
-    type: 'upload' | 'google-drive';
-    url?: string;
-    size?: number;
-    uploadDate: Date;
-  }>;
+  scheduleTemplateId?: string; 
+  groupName?: string;
+  files?: FileAttachment[];
 }
 
 export interface Project {
@@ -35,14 +37,7 @@ export interface Project {
   endDate?: Date;
   tasks: Task[];
   columns: KanbanColumn[];
-  files?: Array<{
-    id: string;
-    name: string;
-    type: 'upload' | 'google-drive';
-    url?: string;
-    size?: number;
-    uploadDate: Date;
-  }>;
+  files?: FileAttachment[];
   parentCourseId?: string;
 }
 
@@ -62,14 +57,7 @@ export interface Task {
   dueDate?: Date;
   projectId: string;
   subtasks?: Subtask[];
-  files?: Array<{ // UUSI OSA
-    id: string;
-    name: string;
-    type: 'upload' | 'google-drive';
-    url?: string;
-    size?: number;
-    uploadDate: Date;
-  }>;
+  files?: FileAttachment[];
 }
 
 export interface ScheduleTemplate {
@@ -90,16 +78,9 @@ export interface RecurringClass {
   startDate: Date;
   endDate: Date;
   color: string;
-  groupName?: string; // For grouping multiple recurring classes
+  groupName?: string; 
   projectId?: string;
-  files?: Array<{
-    id: string;
-    name: string;
-    type: 'upload' | 'google-drive';
-    url?: string;
-    size?: number;
-    uploadDate: Date;
-  }>;
+  files?: FileAttachment[];
 }
 
 export type CalendarView = 'month' | 'week' | 'day' | 'schedule';
