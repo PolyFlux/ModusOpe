@@ -1,4 +1,3 @@
-// src/components/Modals/ConfirmationModal.tsx
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { AlertTriangle, Check, X } from 'lucide-react';
