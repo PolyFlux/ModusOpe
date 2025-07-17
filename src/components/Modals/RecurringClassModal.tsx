@@ -4,6 +4,9 @@ import { X, Calendar, Type, FileText, Clock, File } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 import { RecurringClass, FileAttachment } from '../../types';
 import AttachmentSection from '../Shared/AttachmentSection';
+import FormInput from '../Forms/FormInput';
+import FormTextarea from '../Forms/FormTextarea';
+import FormSelect from '../Forms/FormSelect';
 
 export default function RecurringClassModal() {
   const { state, dispatch } = useApp();
@@ -148,46 +151,35 @@ export default function RecurringClassModal() {
         <div className="flex-1 overflow-y-auto">
           {activeTab === 'details' ? (
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              {/* Lomakekentät pysyvät ennallaan... */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Type className="w-4 h-4 inline mr-2" />
-                  Oppitunnin nimi
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="esim. Matematiikka 9A - Algebra"
-                />
-              </div>
+              <FormInput
+                id="class-title"
+                label="Oppitunnin nimi"
+                icon={<Type className="w-4 h-4 inline mr-2" />}
+                type="text"
+                required
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="esim. Matematiikka 9A - Algebra"
+              />
+
+              <FormTextarea
+                id="class-description"
+                label="Kuvaus"
+                icon={<FileText className="w-4 h-4 inline mr-2" />}
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={2}
+                placeholder="Oppitunnin kuvaus"
+              />
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <FileText className="w-4 h-4 inline mr-2" />
-                  Kuvaus
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                  rows={2}
-                  placeholder="Oppitunnin kuvaus"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Clock className="w-4 h-4 inline mr-2" />
-                  Tuntiryhmä
-                </label>
-                <select
+                <FormSelect
+                  id="class-template-group"
+                  label="Tuntiryhmä"
+                  icon={<Clock className="w-4 h-4 inline mr-2" />}
                   required
                   value={formData.templateGroupName}
                   onChange={(e) => setFormData({ ...formData, templateGroupName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">Valitse tuntiryhmä</option>
                   {templateGroupNames.map(groupName => (
@@ -195,7 +187,7 @@ export default function RecurringClassModal() {
                       {groupName} ({templateGroups[groupName].length} aikaa)
                     </option>
                   ))}
-                </select>
+                </FormSelect>
                 {formData.templateGroupName && (
                   <div className="mt-2 p-2 bg-blue-50 rounded text-sm text-blue-800">
                     <strong>Ajankohdat:</strong> {getTemplateGroupInfo(formData.templateGroupName)}
@@ -209,31 +201,23 @@ export default function RecurringClassModal() {
               </div>
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    <Calendar className="w-4 h-4 inline mr-2" />
-                    Alkupäivä
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Loppupäivä
-                  </label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.endDate}
-                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
+                <FormInput
+                  id="class-start-date"
+                  label="Alkupäivä"
+                  icon={<Calendar className="w-4 h-4 inline mr-2" />}
+                  type="date"
+                  required
+                  value={formData.startDate}
+                  onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                />
+                <FormInput
+                  id="class-end-date"
+                  label="Loppupäivä"
+                  type="date"
+                  required
+                  value={formData.endDate}
+                  onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                />
               </div>
 
               <div className="bg-blue-50 p-3 rounded-lg">
