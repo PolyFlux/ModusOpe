@@ -186,7 +186,7 @@ export default function ProjectModal() {
     if (selectedProject) {
       const confirmed = await getConfirmation({
         title: 'Vahvista poisto',
-        message: `Haluatko varmasti poistaa projektin "${selectedProject.name}"? Tätä toimintoa ei voi perua.`
+        message: `Haluatko varmasti poistaa projektin "${selectedProject.name}"? Tätä toimintoa ei voi tämän jälkeen perua.`
       });
 
       if (confirmed) {
@@ -208,8 +208,6 @@ export default function ProjectModal() {
 
   const colorOptions = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#6B7280'];
 
-  // ...komponentin loppuosa pysyy samana...
-  // (Palautan koko tiedoston sisällön selkeyden vuoksi)
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
