@@ -1,7 +1,7 @@
 import React from 'react';
 import { Calendar, BookOpen, CheckSquare, ClipboardCheck, Home, ChevronLeft, LayoutDashboard } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
-import modusOpeLogo from '../../assets/logo2.jpg';
+import modusOpeLogo from '../../assets/logo.png';
 
 interface SidebarProps {
   activeTab: string;
