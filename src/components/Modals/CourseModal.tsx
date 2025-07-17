@@ -1,11 +1,16 @@
+// src/components/Modals/CourseModal.tsx
 import React, { useState, useEffect } from 'react';
 import { X, BookOpen, FileText, Calendar, Clock } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
-import { Project } from '../../types';
+import { COLOR_OPTIONS, DEFAULT_COLOR } from '../../constants/colors';
+import FormInput from '../Forms/FormInput';
+import FormTextarea from '../Forms/FormTextarea';
+import FormSelect from '../Forms/FormSelect';
+import ColorSelector from '../Forms/ColorSelector';
 
 export default function CourseModal() {
   const { state, dispatch } = useApp();
-  const { showCourseModal, courseModalInfo, projects, scheduleTemplates, recurringClasses } = state;
+  const { showCourseModal, courseModalInfo, projects, scheduleTemplates } = state;
 
   const selectedCourse = courseModalInfo?.id
     ? projects.find(p => p.id === courseModalInfo.id && p.type === 'course')
@@ -14,11 +19,11 @@ export default function CourseModal() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    color: '#3B82F6',
+    color: DEFAULT_COLOR,
     startDate: '',
     endDate: '',
     templateGroupName: ''
-});
+  });
 
   useEffect(() => {
     if (selectedCourse) {
@@ -27,13 +32,14 @@ export default function CourseModal() {
         description: selectedCourse.description || '',
         color: selectedCourse.color,
         startDate: selectedCourse.startDate.toISOString().split('T')[0],
-        endDate: selectedCourse.endDate?.toISOString().split('T')[0] || ''
+        endDate: selectedCourse.endDate?.toISOString().split('T')[0] || '',
+        templateGroupName: '' // Tämä ei ole tallennettu, joten resetoidaan
       });
     } else {
       setFormData({
         name: '',
         description: '',
-        color: '#3B82F6',
+        color: DEFAULT_COLOR,
         startDate: new Date().toISOString().split('T')[0],
         endDate: '',
         templateGroupName: ''
@@ -41,22 +47,21 @@ export default function CourseModal() {
     }
   }, [selectedCourse, showCourseModal]);
 
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-const courseData: any = { // Käytetään 'any' väliaikaisesti, koska lisäämme custom-kentän
-    id: selectedCourse?.id || Date.now().toString(),
-    name: formData.name,
-    description: formData.description,
-    type: 'course',
-    color: formData.color,
-    startDate: new Date(formData.startDate + 'T00:00:00'),
-    endDate: formData.endDate ? new Date(formData.endDate + 'T00:00:00') : undefined,
-    tasks: selectedCourse?.tasks || [],
-    files: selectedCourse?.files || [],
-    templateGroupName: formData.templateGroupName
-};
+    const courseData: any = {
+      id: selectedCourse?.id || Date.now().toString(),
+      name: formData.name,
+      description: formData.description,
+      type: 'course',
+      color: formData.color,
+      startDate: new Date(formData.startDate + 'T00:00:00'),
+      endDate: formData.endDate ? new Date(formData.endDate + 'T00:00:00') : undefined,
+      tasks: selectedCourse?.tasks || [],
+      files: selectedCourse?.files || [],
+      templateGroupName: formData.templateGroupName
+    };
 
     if (selectedCourse) {
       dispatch({ type: 'UPDATE_PROJECT', payload: courseData });
@@ -75,9 +80,7 @@ const courseData: any = { // Käytetään 'any' väliaikaisesti, koska lisäämm
   };
 
   if (!showCourseModal) return null;
-
-  const colorOptions = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#6B7280'];
-
+  
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col">
@@ -95,114 +98,77 @@ const courseData: any = { // Käytetään 'any' väliaikaisesti, koska lisäämm
 
           <div className="flex-1 overflow-y-auto p-6">
               <form onSubmit={handleSubmit} className="space-y-4">
-                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        <BookOpen className="w-4 h-4 inline mr-2" />
-                        Kurssin nimi
-                    </label>
-                    <input
-                        type="text"
-                        required
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Esim. FY7"
-                    />
-                </div>
-
-{/* ===== TUNTIRYHMÄN VALINTA ALKAA ===== */}
-{!selectedCourse && (
-    <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-            <Clock className="w-4 h-4 inline mr-2" />
-            Valitse tuntiryhmä (luo oppitunnit automaattisesti)
-        </label>
-        <select
-            value={formData.templateGroupName}
-            onChange={(e) => {
-                const groupName = e.target.value;
-                // Täytetään kurssin nimi automaattisesti, jos se on tyhjä
-                setFormData({ 
-                    ...formData, 
-                    templateGroupName: groupName,
-                    name: formData.name || groupName
-                });
-            }}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        >
-            <option value="">Ei valintaa (luo tyhjä kurssi)</option>
-            {/* Luodaan uniikit ryhmänimet */}
-            {[...new Set(scheduleTemplates.map(t => t.name))].map(groupName => (
-                <option key={groupName} value={groupName}>
-                    {groupName}
-                </option>
-            ))}
-        </select>
-        <p className="text-xs text-gray-500 mt-1">Valitsemalla tuntiryhmän luot kurssille oppitunnit automaattisesti kiertotuntikaavion pohjalta.</p>
-    </div>
-)}
-{/* ===== TUNTIRYHMÄN VALINTA PÄÄTTYY ===== */}
+                 <FormInput
+                    id="course-name"
+                    label="Kurssin nimi"
+                    icon={<BookOpen className="w-4 h-4 inline mr-2" />}
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Esim. FY7"
+                 />
                 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        <FileText className="w-4 h-4 inline mr-2" />
-                        Muistiinpanot
-                    </label>
-                    <textarea
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        rows={10}
-                        placeholder="Kirjoita kuvaus tai lisää muistiinpanoja"
-                    />
-                </div>
-
-                <div className="grid grid-cols-1 gap-4">
+                {!selectedCourse && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Väri
-                    </label>
-                    <div className="flex space-x-2">
-                      {colorOptions.map(color => (
-                        <button
-                          key={color}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, color })}
-                          className={`w-8 h-8 rounded-full border-2 transition-all ${
-                            formData.color === color ? 'border-gray-800 ring-2 ring-gray-300' : 'border-gray-200 hover:border-gray-400'
-                          }`}
-                          style={{ backgroundColor: color }}
-                        />
-                      ))}
-                    </div>
+                      <FormSelect
+                          id="template-group"
+                          label="Valitse tuntiryhmä (luo oppitunnit automaattisesti)"
+                          icon={<Clock className="w-4 h-4 inline mr-2" />}
+                          value={formData.templateGroupName}
+                          onChange={(e) => {
+                              const groupName = e.target.value;
+                              setFormData({ 
+                                  ...formData, 
+                                  templateGroupName: groupName,
+                                  name: formData.name || groupName
+                              });
+                          }}
+                      >
+                          <option value="">Ei valintaa (luo tyhjä kurssi)</option>
+                          {[...new Set(scheduleTemplates.map(t => t.name))].map(groupName => (
+                              <option key={groupName} value={groupName}>
+                                  {groupName}
+                              </option>
+                          ))}
+                      </FormSelect>
+                      <p className="text-xs text-gray-500 mt-1">Valitsemalla tuntiryhmän luot kurssille oppitunnit automaattisesti kiertotuntikaavion pohjalta.</p>
                   </div>
-                </div>
+                )}
+                
+                <FormTextarea
+                    id="course-description"
+                    label="Muistiinpanot"
+                    icon={<FileText className="w-4 h-4 inline mr-2" />}
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={10}
+                    placeholder="Kirjoita kuvaus tai lisää muistiinpanoja"
+                />
+
+                <ColorSelector 
+                  label="Väri"
+                  selectedColor={formData.color}
+                  onChange={(color) => setFormData({ ...formData, color })}
+                />
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      <Calendar className="w-4 h-4 inline mr-2" />
-                      Alkamispäivä
-                    </label>
-                    <input
-                      type="date"
-                      required
-                      value={formData.startDate}
-                      onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Päättymispäivä
-                    </label>
-                    <input
-                      type="date"
-                      value={formData.endDate}
-                      onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
+                  <FormInput
+                    id="start-date"
+                    label="Alkamispäivä"
+                    icon={<Calendar className="w-4 h-4 inline mr-2" />}
+                    type="date"
+                    required
+                    value={formData.startDate}
+                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                  />
+                  <FormInput
+                    id="end-date"
+                    label="Päättymispäivä"
+                    type="date"
+                    value={formData.endDate}
+                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                  />
                 </div>
 
                 <div className="flex justify-between pt-4 border-t border-gray-200 mt-4">
