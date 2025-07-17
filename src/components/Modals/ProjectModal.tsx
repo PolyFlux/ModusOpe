@@ -3,11 +3,13 @@ import { X, BookOpen, FileText, Calendar, Plus, Trash2, File, Upload, ExternalLi
 import { useApp } from '../../contexts/AppContext';
 import { Project, Task } from '../../types';
 import GoogleDriveBrowser from '../GoogleDrive/GoogleDriveBrowser';
-import { GENERAL_TASKS_PROJECT_ID } from '../../contexts/AppContext'; // LISÄTTY
+import { GENERAL_TASKS_PROJECT_ID } from '../../contexts/AppContext';
+import { useConfirmation } from '../../hooks/useConfirmation'; // UUSI
 
 export default function ProjectModal() {
   const { state, dispatch } = useApp();
   const { showProjectModal, selectedProjectId, projects } = state;
+  const { getConfirmation } = useConfirmation(); // UUSI
 
   const selectedProject = selectedProjectId
     ? projects.find(p => p.id === selectedProjectId)
@@ -139,7 +141,8 @@ export default function ProjectModal() {
       endDate: formData.endDate ? new Date(formData.endDate) : undefined,
       tasks: tasks.map(t => ({...t, projectId })),
       files: files,
-      parentCourseId: formData.parentCourseId || undefined
+      parentCourseId: formData.parentCourseId || undefined,
+      columns: selectedProject?.columns || []
     };
 
     if (selectedProject) {
@@ -178,10 +181,18 @@ export default function ProjectModal() {
      setTasks(tasks.map(t => t.id === taskToToggle.id ? {...t, completed: !t.completed} : t));
   };
 
-  const handleDelete = () => {
+  // UUSI: handleDelete käyttää nyt omaa modaalia
+  const handleDelete = async () => {
     if (selectedProject) {
-      dispatch({ type: 'DELETE_PROJECT', payload: selectedProject.id });
-      dispatch({ type: 'CLOSE_MODALS' });
+      const confirmed = await getConfirmation({
+        title: 'Vahvista poisto',
+        message: `Haluatko varmasti poistaa projektin "${selectedProject.name}"? Tätä toimintoa ei voi perua.`
+      });
+
+      if (confirmed) {
+        dispatch({ type: 'DELETE_PROJECT', payload: selectedProject.id });
+        dispatch({ type: 'CLOSE_MODALS' });
+      }
     }
   };
   
@@ -197,6 +208,8 @@ export default function ProjectModal() {
 
   const colorOptions = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#6B7280'];
 
+  // ...komponentin loppuosa pysyy samana...
+  // (Palautan koko tiedoston sisällön selkeyden vuoksi)
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
@@ -352,7 +365,6 @@ export default function ProjectModal() {
                   </div>
                 </div>
                           <div className="flex justify-between pt-4">
-                              {/* KORJATTU: Piilotetaan poistonappi yleisiltä tehtäviltä */}
                               {selectedProject && selectedProject.id !== GENERAL_TASKS_PROJECT_ID && (
                                   <button
                                       type="button"
