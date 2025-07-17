@@ -1,7 +1,6 @@
 import React from 'react';
 import { Calendar, BookOpen, CheckSquare, ClipboardCheck, Home, ChevronLeft, LayoutDashboard } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
-import modusOpeLogo from '../../assets/logo_original.png';
 
 interface SidebarProps {
   activeTab: string;
@@ -12,7 +11,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
   const { state, dispatch } = useApp();
   const { isSidebarCollapsed, isMobileMenuOpen } = state;
 
-  const menuItems = [
+const menuItems = [
     { id: 'dashboard', label: 'Kojelauta', icon: Home },
     { id: 'calendar', label: 'Kalenteri', icon: Calendar },
     { id: 'courses', label: 'Kurssit', icon: BookOpen },
@@ -31,27 +30,23 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
 
   return (
     <div className={sidebarClasses}>
-      <div className="flex-shrink-0 p-4 border-b border-gray-200 flex justify-between">
+      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         {!isSidebarCollapsed && (
           <div>
-            {/* Palautettu Tailwind-luokkaan. Kokoa voi säätää (esim. h-12, h-14, h-16) */}
-            <img 
-              src={modusOpeLogo} 
-              alt="ModusOpe Logo" 
-              className="h-16 w-auto"
-            />
+            <h1 className="text-xl font-bold text-gray-800">ModusOpe</h1>
             <p className="text-sm text-gray-600 mt-1">Opettajien modus operandi</p>
           </div>
         )}
         <button
           onClick={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
+          // Piilotetaan tämä painike mobiilissa
           className="p-1.5 rounded-full hover:bg-gray-100 hidden md:block"
         >
           <ChevronLeft className={`transition-transform duration-300 ${isSidebarCollapsed ? 'rotate-180' : ''}`} />
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
+      <nav className="flex-1 p-4">
         <ul className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -60,6 +55,7 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
                 <button
                   onClick={() => {
                     onTabChange(item.id);
+                    // Suljetaan mobiilivalikko valinnan jälkeen
                     if (isMobileMenuOpen) {
                       dispatch({ type: 'TOGGLE_MOBILE_MENU' });
                     }
@@ -77,10 +73,10 @@ export default function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             );
           })}
         </ul>
-      </div>
+      </nav>
 
       {!isSidebarCollapsed && (
-        <div className="flex-shrink-0 hidden md:block p-6 border-t border-gray-200">
+        <div className="hidden md:block p-6 border-t border-gray-200">
           <button
             onClick={() => {
               dispatch({ type: 'TOGGLE_EVENT_MODAL' });
