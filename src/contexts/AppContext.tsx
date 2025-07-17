@@ -29,7 +29,6 @@ function generateTaskDeadlineEvents(projects: Project[]): Event[] {
         }));
 }
 
-// --- LISÄTTY OSUUS: Yleisten tehtävien projekti ---
 export const GENERAL_TASKS_PROJECT_ID = 'general_tasks_project';
 
 const generalTasksProject: Project = {
@@ -37,7 +36,7 @@ const generalTasksProject: Project = {
   name: 'Yleiset tehtävät',
   description: 'Tänne kerätään kaikki tehtävät, joita ei ole liitetty mihinkään tiettyyn projektiin.',
   type: 'none',
-  color: '#6B7280', // Harmaa
+  color: '#6B7280',
   startDate: new Date(),
   tasks: [],
   columns: [
@@ -46,10 +45,17 @@ const generalTasksProject: Project = {
     { id: 'done', title: 'Valmis' },
   ],
 };
-// ---------------------------------------------------
 
 const initialProjects: Project[] = [generalTasksProject];
 const initialEvents: Event[] = [];
+
+interface ConfirmationModalState {
+  isOpen: boolean;
+  title?: string;
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}
 
 interface AppState {
   events: Event[];
@@ -73,6 +79,7 @@ interface AppState {
   isSidebarCollapsed: boolean;
   isMobileMenuOpen: boolean;
   selectedKanbanProjectId?: string | null;
+  confirmationModal: ConfirmationModalState;
 }
 
 type AppAction =
@@ -109,7 +116,17 @@ type AppAction =
   | { type: 'UPDATE_TASK_STATUS'; payload: { projectId: string; taskId: string; newStatus: string } }
   | { type: 'ADD_COLUMN'; payload: { projectId: string; title: string } }
   | { type: 'UPDATE_COLUMN'; payload: { projectId: string; column: KanbanColumn } }
-  | { type: 'DELETE_COLUMN'; payload: { projectId: string; columnId: string } };
+  | { type: 'DELETE_COLUMN'; payload: { projectId: string; columnId: string } }
+  | { type: 'SHOW_CONFIRMATION_MODAL'; payload: Omit<ConfirmationModalState, 'isOpen'> }
+  | { type: 'CLOSE_CONFIRMATION_MODAL' };
+
+const initialConfirmationState: ConfirmationModalState = {
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+    onCancel: () => {},
+};
 
 const initialState: AppState = {
   events: [
@@ -131,6 +148,7 @@ const initialState: AppState = {
   isSidebarCollapsed: false,
   isMobileMenuOpen: false,
   selectedKanbanProjectId: null,
+  confirmationModal: initialConfirmationState,
 };
 
 
@@ -182,14 +200,11 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, events: state.events.filter(event => event.id !== action.payload) };
 
     case 'ADD_PROJECT': {
-      // Määritellään tyyppi, joka sisältää väliaikaisen kentän
       type AddProjectPayload = Omit<Project, 'columns'> & { templateGroupName?: string };
       const payload = action.payload as AddProjectPayload;
       
-      // Erotellaan tuntiryhmän nimi varsinaisesta projektidatasta
       const { templateGroupName, ...projectData } = payload;
       
-      // LUODAAN OLETUSSARAKKEET UUDELLE PROJEKTILLE
       const defaultColumns: KanbanColumn[] = [
         { id: 'todo', title: 'Suunnitteilla' },
         { id: 'inProgress', title: 'Työn alla' },
@@ -197,7 +212,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
       ];
       
       const newProject: Project = {
-        ...(projectData as Project), // Muunnetaan takaisin Project-tyyppiseksi
+        ...(projectData as Project),
         id: projectData.id || nanoid(),
         tasks: projectData.tasks || [],
         columns: defaultColumns,
@@ -208,11 +223,9 @@ function appReducer(state: AppState, action: AppAction): AppState {
       let newRecurringClasses = [...state.recurringClasses];
       let eventsWithNewRecurring = [...state.events];
 
-      // Jos käyttäjä valitsi tuntiryhmän, luodaan oppitunnit
       if (templateGroupName && newProject.startDate) {
         const templatesInGroup = state.scheduleTemplates.filter(t => t.name === templateGroupName);
         
-        // Jos päättymispäivää ei ole, käytetään oletuksena vuoden loppua
         const recurringEndDate = newProject.endDate 
             ? newProject.endDate 
             : new Date(newProject.startDate.getFullYear(), 11, 31);
@@ -229,12 +242,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
                 projectId: newProject.id
             };
             newRecurringClasses.push(recurringClass);
-            // Lisätään luodut tapahtumat suoraan listaan
             eventsWithNewRecurring.push(...generateRecurringEvents(recurringClass, template));
         });
       }
 
-      // Lopuksi päivitetään deadline-tapahtumat ja palautetaan uusi tila
       const finalEvents = updateAllEvents({ ...state, events: eventsWithNewRecurring }, newProjects);
       
       return { 
@@ -248,8 +259,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'UPDATE_PROJECT': {
       const newProjects = state.projects.map(p => {
         if (p.id === action.payload.id) {
-          // Yhdistetään olemassa oleva projekti päivitysdataan,
-          // jotta `tasks` ja `columns` säilyvät.
           return { ...p, ...action.payload };
         }
         return p;
@@ -268,7 +277,6 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
     case 'ADD_TASK': {
         const { projectId, task } = action.payload;
-        // --- MUUTETTU OSUUS: Asetetaan oletusprojekti, jos sitä ei ole valittu ---
         const targetProjectId = projectId || GENERAL_TASKS_PROJECT_ID;
         const newProjects = state.projects.map(project =>
             project.id === targetProjectId 
@@ -494,13 +502,28 @@ function appReducer(state: AppState, action: AppAction): AppState {
           return {
             ...p,
             columns: p.columns.filter(c => c.id !== columnId),
-            tasks: p.tasks.filter(t => t.columnId !== columnId), // Poistetaan myös säiliön tehtävät
+            tasks: p.tasks.filter(t => t.columnId !== columnId),
           };
         }
         return p;
       });
       return { ...state, projects: newProjects, events: updateAllEvents(state, newProjects) };
     }
+    
+    case 'SHOW_CONFIRMATION_MODAL':
+      return {
+        ...state,
+        confirmationModal: {
+          ...action.payload,
+          isOpen: true,
+        },
+      };
+
+    case 'CLOSE_CONFIRMATION_MODAL':
+      return {
+        ...state,
+        confirmationModal: initialConfirmationState,
+      };
 
     default:
       return state;
