@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { getDaysInMonth, isSameDay, isToday } from '../../utils/dateUtils';
 import { Event } from '../../types';
@@ -8,16 +8,18 @@ export default function MonthView() {
   const { state, dispatch } = useApp();
   const { selectedDate, events } = state;
 
-  const daysInMonth = getDaysInMonth(selectedDate);
+  const daysInMonth = useMemo(() => getDaysInMonth(selectedDate), [selectedDate]);
   const currentMonth = selectedDate.getMonth();
 
-  const getEventsForDay = (date: Date): Event[] => {
-    return events.filter(event => isSameDay(new Date(event.date), date));
-  };
+  const eventsByDay = useMemo(() => {
+    const map = new Map<string, Event[]>();
+    daysInMonth.forEach(day => {
+      const dayEvents = events.filter(event => isSameDay(new Date(event.date), day));
+      map.set(day.toISOString().split('T')[0], dayEvents);
+    });
+    return map;
+  }, [daysInMonth, events]);
 
-  // ==========================================================================================
-  // MUUTOS: Päivän klikkaus siirtyy päivänäkymään
-  // ==========================================================================================
   const handleDateClick = (date: Date) => {
     dispatch({ type: 'SET_SELECTED_DATE', payload: date });
     dispatch({ type: 'SET_VIEW', payload: 'day' });
@@ -49,7 +51,7 @@ export default function MonthView() {
 
       <div className="grid grid-cols-7">
         {daysInMonth.map((date, index) => {
-          const dayEvents = getEventsForDay(date);
+          const dayEvents = eventsByDay.get(date.toISOString().split('T')[0]) || [];
           const isCurrentMonth = date.getMonth() === currentMonth;
           const isSelected = isSameDay(date, selectedDate);
           const isTodayDate = isToday(date);
