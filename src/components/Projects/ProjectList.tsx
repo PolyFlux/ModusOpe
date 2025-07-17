@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { BookOpen, Calendar, CheckSquare, ClipboardCheck, Plus } from 'lucide-react';
 import { formatDate } from '../../utils/dateUtils';
@@ -7,8 +7,10 @@ import { GENERAL_TASKS_PROJECT_ID } from '../../contexts/AppContext';
 export default function ProjectList() {
   const { state, dispatch } = useApp();
   
-  // Suodatetaan pois kurssit ja yleiset tehtävät
-  const projects = state.projects.filter(p => p.type !== 'course' && p.id !== GENERAL_TASKS_PROJECT_ID);
+  const projects = useMemo(() => 
+    state.projects.filter(p => p.type !== 'course' && p.id !== GENERAL_TASKS_PROJECT_ID),
+    [state.projects]
+  );
 
   const handleProjectClick = (projectId: string) => {
     dispatch({ type: 'TOGGLE_PROJECT_MODAL', payload: projectId });
