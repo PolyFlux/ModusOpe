@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { X, Clock, Type, FileText, Palette, Trash2 } from 'lucide-react';
 import { useApp } from '../../contexts/AppContext';
 import { ScheduleTemplate } from '../../types';
+import { useConfirmation } from '../../hooks/useConfirmation'; // UUSI
 
 export default function ScheduleTemplateModal() {
   const { state, dispatch } = useApp();
   const { showScheduleTemplateModal, selectedScheduleTemplate } = state;
+  const { getConfirmation } = useConfirmation(); // UUSI
 
   const [formData, setFormData] = useState({
     name: '',
@@ -83,17 +85,23 @@ export default function ScheduleTemplateModal() {
     dispatch({ type: 'CLOSE_MODALS' });
   };
 
-  const handleDelete = () => {
+  // UUSI: handleDelete käyttää nyt omaa modaalia
+  const handleDelete = async () => {
     if (selectedScheduleTemplate) {
-      if (confirm('Haluatko varmasti poistaa tämän tuntiryhmän? Tämä poistaa myös kaikki siihen liittyvät tulevat oppitunnit.')) {
-        dispatch({ type: 'DELETE_SCHEDULE_TEMPLATE', payload: selectedScheduleTemplate.id });
-        dispatch({ type: 'CLOSE_MODALS' });
-      }
+        const confirmed = await getConfirmation({
+            title: 'Poista tuntiryhmä?',
+            message: `Haluatko varmasti poistaa tämän tuntiryhmän? Tämä poistaa myös kaikki siihen liittyvät tulevat oppitunnit kalenterista.`
+        });
+        if (confirmed) {
+            dispatch({ type: 'DELETE_SCHEDULE_TEMPLATE', payload: selectedScheduleTemplate.id });
+            dispatch({ type: 'CLOSE_MODALS' });
+        }
     }
   };
 
   if (!showScheduleTemplateModal) return null;
 
+  // ...komponentin loppuosa pysyy samana...
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
@@ -110,7 +118,6 @@ export default function ScheduleTemplateModal() {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Form fields remain the same */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               <Type className="w-4 h-4 inline mr-2" />
@@ -207,8 +214,6 @@ export default function ScheduleTemplateModal() {
               ))}
             </div>
           </div>
-
-          {/* ===== BUTTONS SECTION MODIFIED ===== */}
           <div className="flex justify-between items-center pt-4 border-t mt-4">
             <div>
               {selectedScheduleTemplate && (
